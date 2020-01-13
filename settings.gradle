@@ -1,0 +1,2 @@
+include ':shiv-demo', ':shiv-runtime', ':shiv-compiler'
+rootProject.name='Shiv'
