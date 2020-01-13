@@ -4,9 +4,9 @@ Constructor injection for fragments and view models using dagger2.
 
 ## Requirements and assumptions
 - dagger2
-- construction injection only
+- constructor injection exclusively
 - using `androidx.*` packages
-- single activity; using `androidx.navigation` system
+- using `androidx.navigation` system
 
 
 ## Usage
@@ -20,7 +20,7 @@ like in actual projects.
 
     ```kotlin
     class LoginFragment @Inject constructor() : Fragment(R.layout.fragment_login)
-    
+
     class LoginModel @Inject constructor() : ViewModel()
     ```
 
@@ -30,18 +30,18 @@ like in actual projects.
    a view model's constructor (a memory leak). Install the generated module
    `shiv.FragmentBindings` to the subcomponent and `shiv.SharedViewModelProviders`
    to the parent component.
-   
+
     ```kotlin
     @Component(modules = [SharedViewModelProviders::class])
     interface ModelComponent {
         val mainComponentFactory: MainComponent.Factory
-    
+
         @Component.Factory
         interface Factory {
             fun create(@BindsInstance owner: ViewModelStoreOwner): ModelComponent
         }
     }
-    
+
     @Subcomponent(modules = [FragmentBindings::class])
     interface MainComponent {
         @Subcomponent.Factory
@@ -51,14 +51,14 @@ like in actual projects.
     }
     ```
 
-3. Bind the bundled `Shiv` module to any component. Expose the type `FragmentFactory` in the
-   subcomponent.
+3. Install the bundled `Shiv` module to any component. Expose the type `FragmentFactory`
+   from the subcomponent.
 
     ```kotlin
     @Subcomponent(modules = [FragmentBindings::class, Shiv::class])
     interface MainComponent {
         val fragmentFactory: FragmentFactory
-        
+
         @Subcomponent.Factory
         interface Factory {
             fun create(): MainComponent
@@ -67,9 +67,9 @@ like in actual projects.
     ```
 
 4. Subclass `NavHostFragment` and replace the factory of the child fragment manager with the one
-   created by dagger. Make sure to reference this subclass in the main activity layout instead of
+   provided by dagger. Make sure to reference this subclass in the main activity layout instead of
    `NavHostFragment`. Rebuild the project to trigger the generation of the dagger implementations.
-   
+
     ```kotlin
     class MainFragment : NavHostFragment() {
         override fun onAttach(context: Context) {
@@ -81,7 +81,7 @@ like in actual projects.
             super.onAttach(context)
         }
     }
-    
+
     class MainActivity : AppCompatActivity(R.layout.activity_main)
     ```
     ```xml
@@ -99,34 +99,39 @@ like in actual projects.
 
 5. Go back to the fragment and view models classes and fill out the dependencies. Qualify view model
    dependencies with `@Shared`. Install additional modules as required.
-   
+
     ```kotlin
     class LoginFragment @Inject constructor(
         @Shared private val model: LoginModel
     ) : Fragment(R.layout.fragment_login) {
         override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
             // ...
+            val submitButton = view.findViewById(R.id.submit_button)
+            submitButton.setOnClickListener { model.login() }
+            model.state().observe(viewLifecycleOwner) {
+                // ...
+            }
         }
     }
-    
+
     class LoginModel @Inject constructor(
         private val auth: AuthService
     ) : ViewModel() {
         private val state = MutableLiveData<LoginState>().also { it.value = LoginState() }
-        
+
         fun state(): LiveData<LoginState> = state
-        
+
         fun login() {
             // ...
         }
     }
     ```
-    
+
 ## License
 ```
 MIT License
 
-Copyright (c) 2019 Mon Zafra
+Copyright (c) 2020 Mon Zafra
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -146,4 +151,3 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
-
