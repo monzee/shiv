@@ -6,7 +6,7 @@ package ph.codeia.shiv.demo;
 
 
 public interface AppFlow {
-    void handle(Throwable error, Runnable retry);
-    void handle(Throwable error);
-    void quit();
+	void handle(Throwable error, Runnable retry);
+	void handle(Throwable error);
+	void quit();
 }

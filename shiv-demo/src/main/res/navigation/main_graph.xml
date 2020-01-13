@@ -9,6 +9,6 @@
     <fragment
         android:id="@+id/login"
         android:label="Login"
-        android:name="ph.codeia.shiv.demo.LoginFragment"/>
+        android:name="ph.codeia.shiv.demo.login.LoginFragment" />
 
 </navigation>

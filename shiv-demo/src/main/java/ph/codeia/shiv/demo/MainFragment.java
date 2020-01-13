@@ -5,8 +5,8 @@ import android.content.Context;
 import androidx.annotation.NonNull;
 import androidx.navigation.fragment.NavHostFragment;
 
-import ph.codeia.shiv.reference.AppComponent;
-import ph.codeia.shiv.reference.MainComponent;
+import ph.codeia.shiv.demo.provision.AppComponent;
+
 
 /*
  * This file is a part of the Shiv project.
@@ -14,30 +14,36 @@ import ph.codeia.shiv.reference.MainComponent;
 
 
 public class MainFragment extends NavHostFragment implements AppFlow {
-    @Override
-    public void onAttach(@NonNull Context context) {
-        MainComponent mainComponent = AppComponent.of(context)
-                .viewModelComponentFactory()
-                .create(this)
-                .mainComponentFactory()
-                .create(this);
-        getChildFragmentManager()
-                .setFragmentFactory(mainComponent.fragmentFactory());
-        super.onAttach(context);
-    }
+	@Override
+	public void onAttach(@NonNull Context context) {
+		getChildFragmentManager().setFragmentFactory(
+			AppComponent.of(context)
+				.modelComponentFactory()
+				.create(this)
+				.viewComponentFactory()
+				.create(this)
+				.fragmentFactory()
+		);
+		super.onAttach(context);
+	}
 
-    @Override
-    public void handle(Throwable error, Runnable retry) {
+	@Override
+	public void handle(Throwable error, Runnable retry) {
 
-    }
+	}
 
-    @Override
-    public void handle(Throwable error) {
+	@Override
+	public void handle(Throwable error) {
+		if (error instanceof RuntimeException) {
+			throw (RuntimeException) error;
+		}
+		else {
+			throw new RuntimeException(error);
+		}
+	}
 
-    }
-
-    @Override
-    public void quit() {
-        requireActivity().finish();
-    }
+	@Override
+	public void quit() {
+		requireActivity().finish();
+	}
 }

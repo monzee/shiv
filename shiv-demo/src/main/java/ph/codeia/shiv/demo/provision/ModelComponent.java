@@ -1,4 +1,4 @@
-package ph.codeia.shiv.reference;
+package ph.codeia.shiv.demo.provision;
 
 import androidx.lifecycle.ViewModelStoreOwner;
 
@@ -12,11 +12,11 @@ import shiv.SharedViewModelProviders;
 
 
 @Subcomponent(modules = SharedViewModelProviders.class)
-public interface ViewModelComponent {
-    MainComponent.Factory mainComponentFactory();
+public interface ModelComponent {
+	ViewComponent.Factory viewComponentFactory();
 
-    @Subcomponent.Factory
-    interface Factory {
-        ViewModelComponent create(@BindsInstance ViewModelStoreOwner owner);
-    }
+	@Subcomponent.Factory
+	interface Factory {
+		ModelComponent create(@BindsInstance ViewModelStoreOwner owner);
+	}
 }

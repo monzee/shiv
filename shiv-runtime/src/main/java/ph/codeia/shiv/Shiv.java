@@ -18,32 +18,32 @@ import dagger.Module;
 
 @Module
 public abstract class Shiv {
-    @Binds
-    public abstract FragmentFactory bind(InjectingFragmentFactory factory);
+	@Binds
+	public abstract FragmentFactory bind(InjectingFragmentFactory factory);
 
-    @Binds
-    public abstract ViewModelProvider.Factory bind(InjectingViewModelFactory factory);
+	@Binds
+	public abstract ViewModelProvider.Factory bind(InjectingViewModelFactory factory);
 
-    @NonNull
-    public static <VM extends ViewModel> VM createViewModel(
-            ViewModelStoreOwner owner,
-            Provider<VM> provider,
-            Class<VM> cls
-    ) {
-        return vmProvider(owner, provider).get(cls);
-    }
+	@NonNull
+	public static <VM extends ViewModel> VM createViewModel(
+		ViewModelStoreOwner owner,
+		Provider<VM> provider,
+		Class<VM> cls
+	) {
+		return vmProvider(owner, provider).get(cls);
+	}
 
-    private static <VM extends ViewModel> ViewModelProvider vmProvider(
-            ViewModelStoreOwner owner,
-            final Provider<VM> provider
-    ) {
-        return new ViewModelProvider(owner, new ViewModelProvider.Factory() {
-            @SuppressWarnings("unchecked")
-            @NonNull
-            @Override
-            public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
-                return (T) provider.get();
-            }
-        });
-    }
+	private static <VM extends ViewModel> ViewModelProvider vmProvider(
+		ViewModelStoreOwner owner,
+		final Provider<VM> provider
+	) {
+		return new ViewModelProvider(owner, new ViewModelProvider.Factory() {
+			@SuppressWarnings("unchecked")
+			@NonNull
+			@Override
+			public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
+				return (T) provider.get();
+			}
+		});
+	}
 }
