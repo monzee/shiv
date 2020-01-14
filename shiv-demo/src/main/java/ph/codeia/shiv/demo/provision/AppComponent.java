@@ -11,6 +11,7 @@ import dagger.BindsInstance;
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
+import ph.codeia.shiv.Shiv;
 
 /*
  * This file is a part of the Shiv project.
@@ -18,7 +19,7 @@ import dagger.Provides;
 
 
 @Singleton
-@Component(modules = AppComponent.Providers.class)
+@Component(modules = {Shiv.class, AppComponent.Providers.class})
 public abstract class AppComponent {
 	public abstract ModelComponent.Factory modelComponentFactory();
 

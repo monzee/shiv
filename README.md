@@ -1,22 +1,24 @@
 # Shiv
-Constructor injection for fragments and view models using dagger2.
+Constructor injection for fragments and view models using dagger2 with
+minimal boilerplate.
 
 
 ## Requirements and assumptions
-- dagger2
-- constructor injection exclusively
+- dagger2 in your build dependencies
+- constructor injection only (may change in the future)
 - using `androidx.*` packages
-- using `androidx.navigation` system
+- all view models are owned by the activity and thus shared by every fragment
 
 
 ## Usage
 The following code examples are simplified in order to highlight the important parts
 of the process. Please see the demo module to see how the components typically look
-like in actual projects.
+like in actual projects. All generated code are in java7, so kotlin or d8 is not
+required.
 
-1. Define the classes to be injected. It's alright to keep the constructor empty.
-   This step is done in order to trigger the module code generation. Hit `Ctrl-F9`
-   in order to do so.
+1. Define the classes to be injected. This step is done first in order to trigger
+   the module code generation. You can fill in the dpendencies later. Hit `Ctrl-F9`
+   to build the project.
 
     ```kotlin
     class LoginFragment @Inject constructor() : Fragment(R.layout.fragment_login)
@@ -27,78 +29,54 @@ like in actual projects.
 2. Define the components. Since fragments are shorter-lived than view models, all
    injected fragments must be bound in a subcomponent of wherever the view models
    are bound. This ensures that you can't inject view-related objects into
-   a view model's constructor (a memory leak). Install the generated module
-   `shiv.FragmentBindings` to the subcomponent and `shiv.SharedViewModelProviders`
-   to the parent component.
+   a view model's constructor and cause a memory leak.
+
+   Install the generated module `shiv.FragmentBindings` to the subcomponent. In
+   the factory or builder interface of the module, add a `@BindsInstance`-
+   annotated `ViewModelStoreOwner` parameter/builder method.
 
     ```kotlin
     @Component(modules = [SharedViewModelProviders::class])
     interface ModelComponent {
-        val mainComponentFactory: MainComponent.Factory
+        val viewComponent: ViewComponent
 
         @Component.Factory
         interface Factory {
             fun create(@BindsInstance owner: ViewModelStoreOwner): ModelComponent
         }
     }
-
-    @Subcomponent(modules = [FragmentBindings::class])
-    interface MainComponent {
-        @Subcomponent.Factory
-        interface Factory {
-            fun create(): MainComponent
-        }
-    }
     ```
 
-3. Install the bundled `Shiv` module to any component. Expose the type `FragmentFactory`
-   from the subcomponent.
+3. Install the bundled `Shiv` and the generated `shiv.FragmentBindings` modules
+   into the subcomponent. Expose the type `FragmentFactory` from the subcomponent.
+   Rebuild the project with `Ctrl-F9` to generate the dagger implementations.
 
     ```kotlin
     @Subcomponent(modules = [FragmentBindings::class, Shiv::class])
-    interface MainComponent {
+    interface ViewComponent {
         val fragmentFactory: FragmentFactory
-
-        @Subcomponent.Factory
-        interface Factory {
-            fun create(): MainComponent
-        }
     }
     ```
 
-4. Subclass `NavHostFragment` and replace the factory of the child fragment manager with the one
-   provided by dagger. Make sure to reference this subclass in the main activity layout instead of
-   `NavHostFragment`. Rebuild the project to trigger the generation of the dagger implementations.
+4. Override the activity's `#onCreate` method to use the fragment factory built by dagger.
+   Make sure to do this before calling `super.onCreate(...)`.
 
     ```kotlin
-    class MainFragment : NavHostFragment() {
-        override fun onAttach(context: Context) {
-            childFragmentManager.fragmentFactory = DaggerModelComponent.factory()
+    class MainActivity : AppCompatActivity(R.layout.activity_main) {
+        override fun onCreate(savedInstanceState: Bundle) {
+            supportFragmentManager.fragmentFactory = DaggerModelComponent.factory()
                 .create(this)
-                .mainComponentFactory
-                .create()
+                .viewComponent
                 .fragmentFactory
-            super.onAttach(context)
+            super.onCreate(savedInstanceState)
         }
     }
-
-    class MainActivity : AppCompatActivity(R.layout.activity_main)
-    ```
-    ```xml
-    <!-- activity_main.xml -->
-    <!-- ... -->
-        <fragment
-            android:id="@+id/nav_host"
-            android:name="my.package.MainFragment"
-            app:defaultNavHost="true"
-            app:navGraph="@navigation/main_graph"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-    <!-- ... -->
     ```
 
-5. Go back to the fragment and view models classes and fill out the dependencies. Qualify view model
-   dependencies with `@Shared`. Install additional modules as required.
+5. Go back and fill in the rest of the fragment and view model classes. Install
+   additional modules as required. Qualify view model dependencies with `@Shared`.
+   **DO NOT** request `Fragment` classes from `ViewModel`s because even though it
+   might compile, you won't get the same instance attached to the activity.
 
     ```kotlin
     class LoginFragment @Inject constructor(

@@ -13,7 +13,7 @@ import shiv.SharedViewModelProviders;
 
 @Subcomponent(modules = SharedViewModelProviders.class)
 public interface ModelComponent {
-	ViewComponent.Factory viewComponentFactory();
+	ViewComponent viewComponent();
 
 	@Subcomponent.Factory
 	interface Factory {

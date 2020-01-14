@@ -1,12 +1,8 @@
 package ph.codeia.shiv.demo;
 
-import android.content.Context;
-
-import androidx.annotation.NonNull;
 import androidx.navigation.fragment.NavHostFragment;
 
-import ph.codeia.shiv.demo.provision.AppComponent;
-
+import javax.inject.Inject;
 
 /*
  * This file is a part of the Shiv project.
@@ -14,22 +10,12 @@ import ph.codeia.shiv.demo.provision.AppComponent;
 
 
 public class MainFragment extends NavHostFragment implements AppFlow {
-	@Override
-	public void onAttach(@NonNull Context context) {
-		getChildFragmentManager().setFragmentFactory(
-			AppComponent.of(context)
-				.modelComponentFactory()
-				.create(this)
-				.viewComponentFactory()
-				.create(this)
-				.fragmentFactory()
-		);
-		super.onAttach(context);
+	@Inject
+	public MainFragment() {
 	}
 
 	@Override
 	public void handle(Throwable error, Runnable retry) {
-
 	}
 
 	@Override

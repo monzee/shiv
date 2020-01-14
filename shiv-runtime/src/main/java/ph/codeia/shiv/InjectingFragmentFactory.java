@@ -15,26 +15,20 @@ import javax.inject.Provider;
 
 
 public class InjectingFragmentFactory extends FragmentFactory {
-	private final Map<Class<?>, Provider<Fragment>> providers;
+	private final Map<String, Provider<Fragment>> providers;
 
 	@Inject
-	public InjectingFragmentFactory(Map<Class<?>, Provider<Fragment>> providers) {
+	public InjectingFragmentFactory(Map<String, Provider<Fragment>> providers) {
 		this.providers = providers;
 	}
 
 	@NonNull
 	@Override
 	public Fragment instantiate(@NonNull ClassLoader classLoader, @NonNull String className) {
-		try {
-			Class<?> cls = Class.forName(className, false, classLoader);
-			Provider<Fragment> provider = providers.get(cls);
-			if (provider != null) {
-				return provider.get();
-			}
-			return super.instantiate(classLoader, className);
+		Provider<Fragment> provider = providers.get(className);
+		if (provider != null) {
+			return provider.get();
 		}
-		catch (ClassNotFoundException e) {
-			return super.instantiate(classLoader, className);
-		}
+		return super.instantiate(classLoader, className);
 	}
 }

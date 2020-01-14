@@ -27,6 +27,7 @@ const val VIEW_MODEL_FACTORY = "androidx.lifecycle.ViewModelProvider.Factory"
 const val VIEW_MODEL_STORE_OWNER = "androidx.lifecycle.ViewModelStoreOwner"
 const val INJECTING_VIEW_MODEL_FACTORY = "ph.codeia.shiv.InjectingViewModelFactory"
 const val T = "${'$'}T"
+const val S = "${'$'}S"
 
 object Names {
 	val MODULE = ClassName.get("dagger", "Module")
@@ -34,6 +35,7 @@ object Names {
 	val PROVIDES = ClassName.get("dagger", "Provides")
 	val INTO_MAP = ClassName.get("dagger.multibindings", "IntoMap")
 	val CLASS_KEY = ClassName.get("dagger.multibindings", "ClassKey")
+	val STRING_KEY = ClassName.get("dagger.multibindings", "StringKey")
 	val PROVIDER = ClassName.get("javax.inject", "Provider")
 	val SHARED = ClassName.get("ph.codeia.shiv", "Shared")
 	val SHIV = ClassName.get("ph.codeia.shiv", "Shiv")
@@ -87,8 +89,8 @@ class ShivProcessor : AbstractProcessor() {
 						.addAnnotation(Names.INTO_MAP)
 						.addAnnotation(
 							AnnotationSpec
-								.builder(Names.CLASS_KEY)
-								.addMember("value", "$T.class", fragmentName)
+								.builder(Names.STRING_KEY)
+								.addMember("value", S, it.qualifiedName)
 								.build()
 						)
 						.addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
@@ -164,9 +166,10 @@ class ShivProcessor : AbstractProcessor() {
 }
 
 class ProcessingContext(processingEnv: ProcessingEnvironment) :
-	Elements by processingEnv.elementUtils
-	, Types by processingEnv.typeUtils
-	, Messager by processingEnv.messager {
+	Elements by processingEnv.elementUtils,
+	Types by processingEnv.typeUtils,
+	Messager by processingEnv.messager
+{
 	val filer = processingEnv.filer
 
 	infix fun Element.extends(superType: String): Boolean = let {
