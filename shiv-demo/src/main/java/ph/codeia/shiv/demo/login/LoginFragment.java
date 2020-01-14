@@ -31,7 +31,7 @@ public class LoginFragment extends Fragment {
 
 	@Inject
 	public LoginFragment(@Shared LoginModel model, AppFlow go) {
-		super(R.layout.activity_main);
+		super(R.layout.fragment_login);
 		this.model = model;
 		this.go = go;
 	}
@@ -47,7 +47,30 @@ public class LoginFragment extends Fragment {
 		passwordField.addTextChangedListener(afterChange(model::setPassword));
 		submitButton.setOnClickListener(o -> model.login());
 		model.state().observe(getViewLifecycleOwner(), it -> {
-
+			switch (it.tag) {
+				case IDLE:
+					break;
+				case ACTIVE:
+					username.setError(it.validationResult.username);
+					password.setError(it.validationResult.password);
+					submitButton.setEnabled(it.validationResult.isValid());
+					break;
+				case BUSY:
+					submitButton.setEnabled(false);
+					break;
+				case FAILED:
+					if (it.cause instanceof Login.Error) {
+						go.handle(it.cause, model::validate);
+					}
+					else {
+						go.handle(it.cause);
+					}
+					break;
+				case LOGGED_IN:
+					go.toHomeScreen(it.token);
+					model.validate();
+					break;
+			}
 		});
 	}
 

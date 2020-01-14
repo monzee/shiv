@@ -2,16 +2,23 @@ package ph.codeia.shiv.demo.provision;
 
 import android.content.Context;
 
+import androidx.core.util.PatternsCompat;
+
+import java.util.Random;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.regex.Pattern;
 
 import javax.inject.Singleton;
 
+import dagger.Binds;
 import dagger.BindsInstance;
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
 import ph.codeia.shiv.Shiv;
+import ph.codeia.shiv.demo.login.FakeLoginService;
+import ph.codeia.shiv.demo.login.Login;
 
 /*
  * This file is a part of the Shiv project.
@@ -44,6 +51,19 @@ public abstract class AppComponent {
 		@Singleton
 		public static Executor io() {
 			return Executors.newCachedThreadPool();
+		}
+
+		@Binds
+		public abstract Login.Service bind(FakeLoginService service);
+
+		@Provides
+		public static Pattern emailPattern() {
+			return PatternsCompat.EMAIL_ADDRESS;
+		}
+
+		@Provides
+		public static Random rng() {
+			return new Random();
 		}
 	}
 }

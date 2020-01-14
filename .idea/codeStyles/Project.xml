@@ -28,9 +28,7 @@
       <option name="FOR_STATEMENT_LPAREN_ON_NEXT_LINE" value="true" />
       <option name="FOR_STATEMENT_RPAREN_ON_NEXT_LINE" value="true" />
       <indentOptions>
-        <option name="INDENT_SIZE" value="2" />
-        <option name="CONTINUATION_INDENT_SIZE" value="2" />
-        <option name="TAB_SIZE" value="2" />
+        <option name="CONTINUATION_INDENT_SIZE" value="4" />
         <option name="USE_TAB_CHARACTER" value="true" />
         <option name="SMART_TABS" value="true" />
       </indentOptions>

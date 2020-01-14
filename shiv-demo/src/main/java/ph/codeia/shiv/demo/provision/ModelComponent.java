@@ -11,6 +11,7 @@ import shiv.SharedViewModelProviders;
  */
 
 
+@Per.Activity
 @Subcomponent(modules = SharedViewModelProviders.class)
 public interface ModelComponent {
 	ViewComponent viewComponent();

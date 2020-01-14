@@ -14,6 +14,7 @@ import shiv.FragmentBindings;
  */
 
 
+@Per.Configuration
 @Subcomponent(modules = {FragmentBindings.class, ViewComponent.Providers.class})
 public interface ViewComponent {
 	FragmentFactory fragmentFactory();

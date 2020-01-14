@@ -6,6 +6,7 @@ package ph.codeia.shiv.demo;
 
 
 public interface AppFlow {
+	void toHomeScreen(String authToken);
 	void handle(Throwable error, Runnable retry);
 	void handle(Throwable error);
 	void quit();
