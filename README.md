@@ -3,6 +3,10 @@ Constructor injection for fragments and view models using dagger2 with
 minimal boilerplate.
 
 
+## Installation
+TODO
+
+
 ## Requirements and assumptions
 - dagger2 in your build dependencies
 - constructor injection only (may change in the future)
@@ -17,7 +21,7 @@ like in actual projects. All generated code are in java7, so kotlin or d8 is not
 required.
 
 1. Define the classes to be injected. This step is done first in order to trigger
-   the module code generation. You can fill in the dpendencies later. Hit `Ctrl-F9`
+   the module code generation. You can fill in the dependencies later. Hit `Ctrl-F9`
    to build the project.
 
     ```kotlin
@@ -31,9 +35,10 @@ required.
    are bound. This ensures that you can't inject view-related objects into
    a view model's constructor and cause a memory leak.
 
-   Install the generated module `shiv.FragmentBindings` to the subcomponent. In
-   the factory or builder interface of the module, add a `@BindsInstance`-
-   annotated `ViewModelStoreOwner` parameter/builder method.
+   Install the generated `shiv.SharedViewModelProviders` module to the view model
+   component. In the factory or builder interface of the component, add a
+   `@BindsInstance`-annotated `ViewModelStoreOwner` parameter/builder method.
+   Expose the fragment subcomponent or its factory/builder here.
 
     ```kotlin
     @Component(modules = [SharedViewModelProviders::class])
@@ -58,12 +63,12 @@ required.
     }
     ```
 
-4. Override the activity's `#onCreate` method to use the fragment factory built by dagger.
-   Make sure to do this before calling `super.onCreate(...)`.
+4. Override the activity's `#onCreate` method to use the fragment factory built
+   by dagger. Make sure to do this before calling `super.onCreate(...)`.
 
     ```kotlin
     class MainActivity : AppCompatActivity(R.layout.activity_main) {
-        override fun onCreate(savedInstanceState: Bundle) {
+        override fun onCreate(savedInstanceState: Bundle?) {
             supportFragmentManager.fragmentFactory = DaggerModelComponent.factory()
                 .create(this)
                 .viewComponent
@@ -76,7 +81,9 @@ required.
 5. Go back and fill in the rest of the fragment and view model classes. Install
    additional modules as required. Qualify view model dependencies with `@Shared`.
    **DO NOT** request `Fragment` classes from `ViewModel`s because even though it
-   might compile, you won't get the same instance attached to the activity.
+   might compile, you won't get the same instance attached to the activity. Likewise,
+   if you forget to use `@Shared` in the fragment's constructor parameter, you
+   would get an unowned view model that would not survive configuration changes.
 
     ```kotlin
     class LoginFragment @Inject constructor(
@@ -104,6 +111,11 @@ required.
         }
     }
     ```
+
+6. After this, you can write new fragments and view models and they will automatically
+   be part of the object graph. Just don't forget the `@Inject` and `@Shared`
+   annotations.
+
 
 ## License
 ```
