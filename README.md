@@ -117,6 +117,32 @@ required.
    annotations.
 
 
+## But, what about...
+
+### AndroidViewModel?
+
+`AndroidViewModel`s are view models that has a constructor dependency on an
+`Application` instance. The view model can then build other objects that need
+an application context (e.g. anything that needs file IO). If you really
+need an application, you can bind it to the dagger graph via `@BindsInstance` in
+a (sub)component factory/builder and it will be provided to your view model
+constructor. You probably don't need an `Application` though but a service that
+depends on `Context`. For clarity, it's best to depend directly on that service
+instead.
+
+### SavedStateHandle?
+
+`SavedStateHandle` allows view models constructed by `SavedStateViewModelFactory`
+to read and write to a `Bundle` that persists not only across configuration changes
+but also process death and recreation. Theoretically, you could bind a `SavedStateHandle`
+instance to the dagger graph, but creating and managing a `SavedStateHandle` is
+not very simple. Unfortunately, the `SavedStateHandleController` class is package
+private to `androidx.lifecycle` and I'm not about to copy-paste all that logic.
+Perhaps it will become public in the future, but for now you could bind the nullable
+`Bundle` that you receive in the activity `#onCreate` hook and inject it to your
+view models.
+
+
 ## License
 ```
 MIT License
