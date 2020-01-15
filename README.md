@@ -121,7 +121,7 @@ required.
 
 ### AndroidViewModel?
 
-`AndroidViewModel`s are view models that has a constructor dependency on an
+`AndroidViewModel`s are view models that have a constructor dependency on an
 `Application` instance. The view model can then build other objects that need
 an application context (e.g. anything that needs file IO). If you really
 need an application, you can bind it to the dagger graph via `@BindsInstance` in
@@ -142,6 +142,37 @@ Perhaps it will become public in the future, but for now you could bind the null
 `Bundle` that you receive in the activity `#onCreate` hook and inject it to your
 view models.
 
+## fragment-owned ViewModel?
+
+Sometimes you want a view model that is scoped to a particular fragment and not to
+the activity. You might want the data to survive configuration changes, but you
+also want the data to go away when the fragment is detached so that when the fragment
+is re-attached, you get back to a clean state. In this case, you shouldn't inject
+a `@Shared` view model to a fragment, but instead depend on a `ViewModelProvider.Factory`
+and build your own view models using `ViewModelProvider` or the jetpack viewmodel
+extension.
+
+When the interface `ViewModelProvider.Factory` is requested anywhere in the graph,
+the `shiv` processor automatically generates a module called `shiv.ViewModelBindings`
+that should be added to your dagger graph. The bundled `Shiv` module itself binds
+an implementation of the `ViewModelProvider.Factory` that relies on this generated
+module to populate a map multibinding of view model providers.
+
+```kotlin
+@Subcomponent(modules = [Shiv::class, FragmentBindings::class, ViewModelBindings::class])
+interface ViewComponent {
+    // ...
+}
+
+class SomeFragment @Inject constructor(
+    private val vmFactory: ViewModelProvider.Factory
+) : Fragment(R.layout.some_layout) {
+    // using jetpack lifecycle-viewmodel-ktx
+    private val model: SomeViewModel by viewModels { vmFactory }
+
+    // ...
+}
+```
 
 ## License
 ```
