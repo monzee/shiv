@@ -142,7 +142,7 @@ Perhaps it will become public in the future, but for now you could bind the null
 `Bundle` that you receive in the activity `#onCreate` hook and inject it to your
 view models.
 
-## fragment-owned ViewModel?
+### fragment-owned ViewModel?
 
 Sometimes you want a view model that is scoped to a particular fragment and not to
 the activity. You might want the data to survive configuration changes, but you
