@@ -13,6 +13,7 @@ import javax.lang.model.element.TypeElement
 import javax.lang.model.type.TypeMirror
 import javax.lang.model.util.Elements
 import javax.lang.model.util.Types
+import javax.tools.Diagnostic
 
 
 /*
@@ -48,7 +49,7 @@ class ShivProcessor : AbstractProcessor() {
 	}
 
 	override fun getSupportedAnnotationTypes(): Set<String> = run {
-		setOf(INJECT)
+		setOf(INJECT, Names.SHARED.toString())
 	}
 
 	@Suppress("UnstableApiUsage")
@@ -135,12 +136,25 @@ class ShivProcessor : AbstractProcessor() {
 				.writeTo(filer)
 
 			if (shouldMultiBindVM) {
+				// TODO: find all qualifiers used with a particular VM type and generate a @Binds method for each
+				// special casing @Shared for now
+				val sharedVMs = roundEnv.getElementsAnnotatedWith(getTypeElement(Names.SHARED.toString()))
+					.filter {
+						when (it.kind) {
+							ElementKind.PARAMETER -> it.enclosingElement.kind == ElementKind.CONSTRUCTOR
+							ElementKind.FIELD -> true
+							else -> false
+						}
+					}
+					.filter { it extends VIEW_MODEL }
+					.map { MoreTypes.asTypeElement(it.asType()) }
+
 				TypeSpec.interfaceBuilder("ViewModelBindings")
 					.addAnnotation(Names.MODULE)
 					.addModifiers(Modifier.PUBLIC)
-					.addMethods(vmElements.map {
+					.addMethods(vmElements.flatMap {
 						val vmName = ClassName.get(it)
-						MethodSpec.methodBuilder("bind${it.simpleName}")
+						val methodSpec = MethodSpec.methodBuilder("bind${it.simpleName}")
 							.addAnnotation(Names.BINDS)
 							.addAnnotation(Names.INTO_MAP)
 							.addAnnotation(
@@ -152,6 +166,17 @@ class ShivProcessor : AbstractProcessor() {
 							.addParameter(vmName, "vm")
 							.returns(TypeName(VIEW_MODEL))
 							.build()
+						val methods = listOf(methodSpec)
+						if (it !in sharedVMs) methods
+						else methods + run {
+							MethodSpec.methodBuilder("bindShared${it.simpleName}")
+								.addAnnotation(Names.BINDS)
+								.addAnnotation(Names.SHARED)
+								.addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
+								.addParameter(vmName, "vm")
+								.returns(vmName)
+								.build()
+						}
 					})
 					.build()
 					.let { JavaFile.builder("shiv", it) }

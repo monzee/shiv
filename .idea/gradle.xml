@@ -11,6 +11,7 @@
             <option value="$PROJECT_DIR$/shiv-compiler" />
             <option value="$PROJECT_DIR$/shiv-demo" />
             <option value="$PROJECT_DIR$/shiv-runtime" />
+            <option value="$PROJECT_DIR$/shiv-tests" />
           </set>
         </option>
         <option name="resolveModulePerSourceSet" value="false" />

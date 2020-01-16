@@ -11,7 +11,7 @@ import javax.inject.Inject;
  */
 
 
-@SuppressWarnings("ConstantConditions")
+@SuppressWarnings({"ConstantConditions", "WeakerAccess"})
 public class LoginModel extends ViewModel {
 	private final MutableLiveData<Login.State> state = new MutableLiveData<>();
 	private final Login.Service service;
@@ -86,6 +86,8 @@ public class LoginModel extends ViewModel {
 						}
 					});
 				}
+				break;
+			default:
 				break;
 		}
 	}

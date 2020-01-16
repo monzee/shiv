@@ -9,6 +9,7 @@ import android.widget.EditText;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.Observer;
 
@@ -25,8 +26,10 @@ import ph.codeia.shiv.demo.R;
  */
 
 
+@SuppressWarnings("WeakerAccess")
 public class LoginFragment extends Fragment {
-	private final LoginModel model;
+	@VisibleForTesting
+	final LoginModel model;
 	private final AppFlow go;
 
 	@Inject

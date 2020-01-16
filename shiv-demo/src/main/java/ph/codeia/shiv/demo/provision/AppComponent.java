@@ -16,7 +16,6 @@ import dagger.BindsInstance;
 import dagger.Component;
 import dagger.Module;
 import dagger.Provides;
-import ph.codeia.shiv.Shiv;
 import ph.codeia.shiv.demo.login.FakeLoginService;
 import ph.codeia.shiv.demo.login.Login;
 
@@ -26,7 +25,7 @@ import ph.codeia.shiv.demo.login.Login;
 
 
 @Singleton
-@Component(modules = {Shiv.class, AppComponent.Providers.class})
+@Component(modules = {AppComponent.Providers.class})
 public abstract class AppComponent {
 	public abstract ModelComponent.Factory modelComponentFactory();
 
@@ -53,9 +52,6 @@ public abstract class AppComponent {
 			return Executors.newCachedThreadPool();
 		}
 
-		@Binds
-		public abstract Login.Service bind(FakeLoginService service);
-
 		@Provides
 		public static Pattern emailPattern() {
 			return PatternsCompat.EMAIL_ADDRESS;
@@ -65,5 +61,8 @@ public abstract class AppComponent {
 		public static Random rng() {
 			return new Random();
 		}
+
+		@Binds
+		public abstract Login.Service loginService(FakeLoginService service);
 	}
 }

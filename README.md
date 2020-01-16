@@ -9,6 +9,8 @@ TODO
 
 ## Requirements and assumptions
 - dagger2 in your build dependencies
+- no existing binding to `FragmentFactory` and `ViewModelProvider.Factory` in
+  the graph
 - constructor injection only (may change in the future)
 - using `androidx.*` packages
 - all view models are owned by the activity and thus shared by every fragment
@@ -32,8 +34,8 @@ required.
 
 2. Define the components. Since fragments are shorter-lived than view models, all
    injected fragments must be bound in a subcomponent of wherever the view models
-   are bound. This ensures that you can't inject view-related objects into
-   a view model's constructor and cause a memory leak.
+   are bound. This is so that you can't inject view-related objects into a view
+   model's constructor and cause a memory leak.
 
    Install the generated `shiv.SharedViewModelProviders` module to the view model
    component. In the factory or builder interface of the component, add a
@@ -57,7 +59,7 @@ required.
    Rebuild the project with `Ctrl-F9` to generate the dagger implementations.
 
     ```kotlin
-    @Subcomponent(modules = [FragmentBindings::class, Shiv::class])
+    @Subcomponent(modules = [Shiv::class, FragmentBindings::class])
     interface ViewComponent {
         val fragmentFactory: FragmentFactory
     }
@@ -80,10 +82,8 @@ required.
 
 5. Go back and fill in the rest of the fragment and view model classes. Install
    additional modules as required. Qualify view model dependencies with `@Shared`.
-   **DO NOT** request `Fragment` classes from `ViewModel`s because even though it
-   might compile, you won't get the same instance attached to the activity. Likewise,
-   if you forget to use `@Shared` in the fragment's constructor parameter, you
-   would get an unowned view model that would not survive configuration changes.
+   If you forget to use `@Shared` in the fragment's constructor parameter, you
+   would get an orphan view model that would not survive configuration changes.
 
     ```kotlin
     class LoginFragment @Inject constructor(
@@ -112,37 +112,42 @@ required.
     }
     ```
 
+   **DO NOT** request `Fragment` classes from `ViewModel`s because even though it
+   might compile, you won't get the same instance attached to the activity. If you
+   somehow managed to inject a live fragment to a view model, that is a bad situation
+   that you must rectify because you have just leaked the activity context and all
+   the views hanging on it.
+
 6. After this, you can write new fragments and view models and they will automatically
    be part of the object graph. Just don't forget the `@Inject` and `@Shared`
    annotations.
 
 
-## But, what about...
+## But what about...
 
-### AndroidViewModel?
+### ...`AndroidViewModel`?
 
 `AndroidViewModel`s are view models that have a constructor dependency on an
-`Application` instance. The view model can then build other objects that need
-an application context (e.g. anything that needs file IO). If you really
-need an application, you can bind it to the dagger graph via `@BindsInstance` in
-a (sub)component factory/builder and it will be provided to your view model
-constructor. You probably don't need an `Application` though but a service that
-depends on `Context`. For clarity, it's best to depend directly on that service
-instead.
+`Application`. The view model can then build other objects that need an application
+context (e.g. anything that needs file IO). If you really need an application, you
+can bind it to the dagger graph via `@BindsInstance` in a (sub)component factory/builder
+and it will be provided to your view model constructor. You probably don't need
+an `Application` though but a service that depends on `Context`. For clarity, it's
+best to depend directly on that service instead.
 
-### SavedStateHandle?
+### ...`SavedStateHandle`?
 
 `SavedStateHandle` allows view models constructed by `SavedStateViewModelFactory`
 to read and write to a `Bundle` that persists not only across configuration changes
 but also process death and recreation. Theoretically, you could bind a `SavedStateHandle`
 instance to the dagger graph, but creating and managing a `SavedStateHandle` is
 not very simple. Unfortunately, the `SavedStateHandleController` class is package
-private to `androidx.lifecycle` and I'm not about to copy-paste all that logic.
-Perhaps it will become public in the future, but for now you could bind the nullable
-`Bundle` that you receive in the activity `#onCreate` hook and inject it to your
-view models.
+private to `androidx.lifecycle` and I'm not about to copy-paste all that logic or
+hijack their namespace. Perhaps it will become public in the future, but for now
+you could bind the nullable `Bundle` that you receive in the activity `#onCreate`
+hook and inject it to your view models.
 
-### fragment-owned ViewModel?
+### ...fragment-owned `ViewModel`s?
 
 Sometimes you want a view model that is scoped to a particular fragment and not to
 the activity. You might want the data to survive configuration changes, but you
@@ -153,9 +158,9 @@ and build your own view models using `ViewModelProvider` or the jetpack viewmode
 extension.
 
 When the interface `ViewModelProvider.Factory` is requested anywhere in the graph,
-the `shiv` processor automatically generates a module called `shiv.ViewModelBindings`
-that should be added to your dagger graph. The bundled `Shiv` module itself binds
-an implementation of the `ViewModelProvider.Factory` that relies on this generated
+the `shiv` processor generates a module called `shiv.ViewModelBindings` that should
+be added to your dagger graph. The bundled `Shiv` module itself binds an
+implementation of the `ViewModelProvider.Factory` that relies on this generated
 module to populate a map multibinding of view model providers.
 
 ```kotlin
@@ -173,6 +178,13 @@ class SomeFragment @Inject constructor(
     // ...
 }
 ```
+
+### ...if I already have a binding to `FragmentFactory` or `ViewModelProvider.Factory`?
+
+Don't install the `Shiv` module. Instead, use the concrete types `InjectingFragmentFactory`
+and `InjectingViewModelFactory` anywhere you use `FragmentFactory` and
+`ViewModelProvider.Factory` respectively.
+
 
 ## License
 ```

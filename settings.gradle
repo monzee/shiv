@@ -1,2 +1,2 @@
-include ':shiv-demo', ':shiv-runtime', ':shiv-compiler'
+include ':shiv-demo', ':shiv-runtime', ':shiv-compiler', ':shiv-tests'
 rootProject.name='Shiv'
