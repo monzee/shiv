@@ -179,6 +179,9 @@ class SomeFragment @Inject constructor(
 }
 ```
 
+Note that `SomeViewModel` above must be reachable by dagger, so an `@Inject`ed
+constructor is required even if it's empty.
+
 ### ...if I already have a binding to `FragmentFactory` or `ViewModelProvider.Factory`?
 
 Don't install the `Shiv` module. Instead, use the concrete types `InjectingFragmentFactory`

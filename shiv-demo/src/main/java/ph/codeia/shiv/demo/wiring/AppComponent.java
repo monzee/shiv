@@ -1,4 +1,4 @@
-package ph.codeia.shiv.demo.provision;
+package ph.codeia.shiv.demo.wiring;
 
 import android.content.Context;
 

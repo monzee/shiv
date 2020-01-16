@@ -136,25 +136,12 @@ class ShivProcessor : AbstractProcessor() {
 				.writeTo(filer)
 
 			if (shouldMultiBindVM) {
-				// TODO: find all qualifiers used with a particular VM type and generate a @Binds method for each
-				// special casing @Shared for now
-				val sharedVMs = roundEnv.getElementsAnnotatedWith(getTypeElement(Names.SHARED.toString()))
-					.filter {
-						when (it.kind) {
-							ElementKind.PARAMETER -> it.enclosingElement.kind == ElementKind.CONSTRUCTOR
-							ElementKind.FIELD -> true
-							else -> false
-						}
-					}
-					.filter { it extends VIEW_MODEL }
-					.map { MoreTypes.asTypeElement(it.asType()) }
-
 				TypeSpec.interfaceBuilder("ViewModelBindings")
 					.addAnnotation(Names.MODULE)
 					.addModifiers(Modifier.PUBLIC)
-					.addMethods(vmElements.flatMap {
+					.addMethods(vmElements.map {
 						val vmName = ClassName.get(it)
-						val methodSpec = MethodSpec.methodBuilder("bind${it.simpleName}")
+						MethodSpec.methodBuilder("bind${it.simpleName}")
 							.addAnnotation(Names.BINDS)
 							.addAnnotation(Names.INTO_MAP)
 							.addAnnotation(
@@ -166,17 +153,6 @@ class ShivProcessor : AbstractProcessor() {
 							.addParameter(vmName, "vm")
 							.returns(TypeName(VIEW_MODEL))
 							.build()
-						val methods = listOf(methodSpec)
-						if (it !in sharedVMs) methods
-						else methods + run {
-							MethodSpec.methodBuilder("bindShared${it.simpleName}")
-								.addAnnotation(Names.BINDS)
-								.addAnnotation(Names.SHARED)
-								.addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-								.addParameter(vmName, "vm")
-								.returns(vmName)
-								.build()
-						}
 					})
 					.build()
 					.let { JavaFile.builder("shiv", it) }

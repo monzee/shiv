@@ -38,7 +38,7 @@ public class LoginModel extends ViewModel {
 		validateIfActive();
 	}
 
-	public void validate() {
+	public void activate() {
 		Login.State loginState = state.getValue();
 		loginState.validationResult = service.validate(username, password);
 		loginState.tag = Login.Tag.ACTIVE;
@@ -49,7 +49,7 @@ public class LoginModel extends ViewModel {
 		Login.State loginState = state.getValue();
 		switch (loginState.tag) {
 			case IDLE:
-				validate();
+				activate();
 				// fallthrough
 			case ACTIVE:
 				if (loginState.validationResult.isValid()) {
@@ -94,7 +94,7 @@ public class LoginModel extends ViewModel {
 
 	private void validateIfActive() {
 		if (state.getValue().tag == Login.Tag.ACTIVE) {
-			validate();
+			activate();
 		}
 	}
 }

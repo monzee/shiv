@@ -63,15 +63,15 @@ public class LoginFragment extends Fragment {
 					break;
 				case FAILED:
 					if (it.cause instanceof Login.Error) {
-						go.handle(it.cause, model::validate);
+						go.handle(it.cause, model::activate);
 					}
 					else {
 						go.handle(it.cause);
 					}
 					break;
 				case LOGGED_IN:
+					model.activate();
 					go.toHomeScreen(it.token);
-					model.validate();
 					break;
 			}
 		});

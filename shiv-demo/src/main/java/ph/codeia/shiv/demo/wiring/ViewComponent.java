@@ -1,4 +1,4 @@
-package ph.codeia.shiv.demo.provision;
+package ph.codeia.shiv.demo.wiring;
 
 import androidx.fragment.app.FragmentFactory;
 
@@ -16,7 +16,11 @@ import shiv.FragmentBindings;
 
 
 @Per.Configuration
-@Subcomponent(modules = {Shiv.class, FragmentBindings.class, ViewComponent.Providers.class})
+@Subcomponent(modules = {
+	Shiv.class,
+	FragmentBindings.class,
+	ViewComponent.Providers.class
+})
 public interface ViewComponent {
 	FragmentFactory fragmentFactory();
 

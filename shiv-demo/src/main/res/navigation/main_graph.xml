@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+<navigation
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/main_graph"
@@ -9,6 +10,17 @@
     <fragment
         android:id="@+id/login"
         android:label="Login"
-        android:name="ph.codeia.shiv.demo.login.LoginFragment" />
+        android:name="ph.codeia.shiv.demo.login.LoginFragment">
+
+        <action
+            android:id="@+id/to_fizzbuzz"
+            app:destination="@id/fizzbuzz" />
+
+    </fragment>
+
+    <fragment
+        android:id="@+id/fizzbuzz"
+        android:label="FizzBuzz"
+        android:name="ph.codeia.shiv.demo.fizzbuzz.FizzBuzzFragment" />
 
 </navigation>

@@ -31,7 +31,7 @@ class StoreOwner @Inject constructor() : ViewModelStoreOwner {
 	override fun getViewModelStore(): ViewModelStore = store
 }
 
-@Module
+@Module(includes = [shiv.SharedViewModelProviders::class])
 interface Bindings {
 	@Binds
 	fun owner(e: StoreOwner): ViewModelStoreOwner
@@ -40,13 +40,13 @@ interface Bindings {
 
 // why am i forced to use the fqcn of the generated modules?
 @Singleton
-@Component(modules = [Shiv::class, shiv.SharedViewModelProviders::class, Bindings::class])
+@Component(modules = [Shiv::class, Bindings::class])
 interface SharedComponent {
 	fun inject(test: ViewModelProcessorTest)
 }
 
 @Singleton
-@Component(modules = [Shiv::class, shiv.ViewModelBindings::class])
+@Component(modules = [Shiv::class, shiv.ViewModelBindings::class, Bindings::class])
 interface FactoryComponent {
 	val providers: Map<Class<*>, @JvmSuppressWildcards Provider<ViewModel>>
 }

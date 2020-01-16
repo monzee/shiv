@@ -6,7 +6,7 @@ import androidx.navigation.fragment.NavHostFragment;
 
 import javax.inject.Inject;
 
-import ph.codeia.shiv.demo.provision.Per;
+import ph.codeia.shiv.demo.wiring.Per;
 
 /*
  * This file is a part of the Shiv project.
@@ -22,6 +22,7 @@ public class MainFragment extends NavHostFragment implements AppFlow {
 	@Override
 	public void toHomeScreen(String authToken) {
 		Toast.makeText(requireContext(), authToken, Toast.LENGTH_SHORT).show();
+		getNavController().navigate(R.id.to_fizzbuzz);
 	}
 
 	@Override
