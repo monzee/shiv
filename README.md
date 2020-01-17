@@ -4,7 +4,7 @@ minimal boilerplate.
 
 
 ## Installation [ ![Download](https://api.bintray.com/packages/monzee/jvm/shiv-runtime/images/download.svg) ](https://bintray.com/monzee/jvm/shiv-runtime/_latestVersion)
-Replace `$version` below with the version number in the image above.
+Replace `$version` below with the version number in the badge above.
 ```
 dependencies {
     implementation "ph.codeia.shiv:shiv-runtime:$version"
@@ -63,8 +63,9 @@ required.
     }
     ```
 
-   The `shiv.` part is need in kotlin due to what I presume is a kapt bug. In
-   java, you can import the generated module and just use the class name.
+   The `shiv.` part is needed in kotlin. In java, you can import the generated
+   module and just use the class name. To do the same in kotlin, you must add
+   `kapt { correctErrorTypes = true }` in your gradle script.
 
 3. Install the bundled `Shiv` and the generated `shiv.FragmentBindings` modules
    into the subcomponent. Expose the type `FragmentFactory` from the subcomponent.

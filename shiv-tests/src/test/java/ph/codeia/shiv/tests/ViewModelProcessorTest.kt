@@ -12,6 +12,7 @@ import org.junit.Assert.*
 import ph.codeia.shiv.InjectingViewModelFactory
 import ph.codeia.shiv.Shared
 import ph.codeia.shiv.Shiv
+import shiv.SharedViewModelProviders
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -31,14 +32,13 @@ class StoreOwner @Inject constructor() : ViewModelStoreOwner {
 	override fun getViewModelStore(): ViewModelStore = store
 }
 
-@Module(includes = [shiv.SharedViewModelProviders::class])
+@Module(includes = [SharedViewModelProviders::class])
 interface Bindings {
 	@Binds
 	fun owner(e: StoreOwner): ViewModelStoreOwner
 }
 
 
-// why am i forced to use the fqcn of the generated modules?
 @Singleton
 @Component(modules = [Shiv::class, Bindings::class])
 interface SharedComponent {
