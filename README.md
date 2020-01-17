@@ -49,7 +49,7 @@ required.
    Expose the fragment subcomponent or its factory/builder here.
 
     ```kotlin
-    @Component(modules = [SharedViewModelProviders::class])
+    @Component(modules = [shiv.SharedViewModelProviders::class])
     interface ModelComponent {
         val viewComponent: ViewComponent
 
@@ -60,12 +60,15 @@ required.
     }
     ```
 
+	The `shiv.` part is need in kotlin due to what I presume is a kapt bug. In
+	java, you can import the generated module and just use the class name.
+
 3. Install the bundled `Shiv` and the generated `shiv.FragmentBindings` modules
    into the subcomponent. Expose the type `FragmentFactory` from the subcomponent.
    Rebuild the project with `Ctrl-F9` to generate the dagger implementations.
 
     ```kotlin
-    @Subcomponent(modules = [Shiv::class, FragmentBindings::class])
+    @Subcomponent(modules = [Shiv::class, shiv.FragmentBindings::class])
     interface ViewComponent {
         val fragmentFactory: FragmentFactory
     }
@@ -170,7 +173,7 @@ implementation of the `ViewModelProvider.Factory` that relies on this generated
 module to populate a map multibinding of view model providers.
 
 ```kotlin
-@Subcomponent(modules = [Shiv::class, FragmentBindings::class, ViewModelBindings::class])
+@Subcomponent(modules = [Shiv::class, shiv.FragmentBindings::class, shiv.ViewModelBindings::class])
 interface ViewComponent {
     // ...
 }
