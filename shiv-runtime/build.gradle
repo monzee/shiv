@@ -1,19 +1,26 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath "digital.wup:android-maven-publish:3.6.2"
+    }
+}
+
 apply plugin: 'com.android.library'
+apply plugin: "digital.wup.android-maven-publish"
 
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.1"
-
     defaultConfig {
         minSdkVersion 14
         targetSdkVersion 29
         versionCode 1
         versionName "1.0"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles 'consumer-rules.pro'
     }
-
     buildTypes {
         release {
             minifyEnabled false
@@ -22,12 +29,75 @@ android {
     }
 }
 
-ext {
-    dagger_version = '2.25.2'
-}
-
 dependencies {
     implementation 'androidx.appcompat:appcompat:1.1.0'
     implementation "com.google.dagger:dagger:$dagger_version"
-    testImplementation 'junit:junit:4.12'
+}
+
+publishing {
+    repositories.maven {
+        name "bintray"
+        url "https://api.bintray.com/maven/monzee/jvm/shiv-runtime/"
+        credentials {
+            username = BINTRAY_USER
+            password = BINTRAY_API_KEY
+        }
+    }
+
+    android.libraryVariants.matching { it.buildType.name == "release" }.all {
+        def stem = name.capitalize()
+        def docs = tasks.register("javadoc$stem", Javadoc) {
+            group "documentation"
+            source android.sourceSets.main.java.sourceFiles
+            classpath += javaCompileProvider.get().classpath + files(android.bootClasspath)
+            title "Shiv"
+            options {
+                links "https://d.android.com/reference"
+            }
+            exclude "**/BuildConfig.java"
+            exclude "**/R.java"
+        }
+        def docsJar = tasks.register("jar${stem}Javadoc", Jar) {
+            group "publishing"
+            dependsOn docs
+            from docs.get().destinationDir
+            classifier "javadoc"
+        }
+        def sourceJar = tasks.register("jar${stem}Sources", Jar) {
+            group "publishing"
+            from sourceSets.java.srcDirs
+            classifier "sources"
+        }
+        publications.register(name, MavenPublication) {
+            from components.android
+            artifact sourceJar.get()
+            artifact docsJar.get()
+            pom {
+                name = "Shiv"
+                description = "Boilerplate-free constructor injection for android fragments and view models"
+                url ="https://github.com/monzee/shiv"
+                developers {
+                    developer {
+                        id = "monzee"
+                        name = "Mon Zafra"
+                        email = "mz.codeia.ph"
+                        organization = "Codeia Inc."
+                        organizationUrl = "https://codeia.ph"
+                    }
+                }
+                licenses {
+                    license {
+                        name = "MIT License"
+                        url = "https://mit-license.org/license.txt"
+                        distribution = "repo"
+                    }
+                }
+                scm {
+                    url = "https://github.com/monzee/shiv"
+                    connection = "scm:git:https://github.com/monzee/shiv.git"
+                    developerConnection = "scm:git:ssh://git@github.com:monzee/shiv.git"
+                }
+            }
+        }
+    }
 }

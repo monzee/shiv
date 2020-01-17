@@ -22,10 +22,6 @@ public class MainActivity extends AppCompatActivity {
 			.build();
 	private NavController nav;
 
-	public MainActivity() {
-		super(R.layout.activity_main);
-	}
-
 	@Override
 	protected void onCreate(@Nullable Bundle savedInstanceState) {
 		getSupportFragmentManager().setFragmentFactory(
@@ -36,6 +32,7 @@ public class MainActivity extends AppCompatActivity {
 				.fragmentFactory()
 		);
 		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_main);
 	}
 
 	@Override

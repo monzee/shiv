@@ -1,10 +1,16 @@
 # Shiv
+[ ![Download](https://api.bintray.com/packages/monzee/jvm/shiv-runtime/images/download.svg) ](https://bintray.com/monzee/jvm/shiv-runtime/_latestVersion)
 Constructor injection for fragments and view models using dagger2 with
 minimal boilerplate.
 
 
 ## Installation
-TODO
+```
+dependencies {
+    implementation "ph.codeia.shiv:shiv-runtime:0.1.0"
+    annotationProcessor "ph.codeia.shiv:shiv-compiler:0.1.0"
+}
+```
 
 
 ## Requirements and assumptions
