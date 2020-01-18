@@ -14,27 +14,48 @@ import javax.inject.Inject;
 public class LoginModel extends ViewModel {
 	private enum Tag {IDLE, ACTIVE, BUSY, FAILED, LOGGED_IN}
 
-	private static class LocalState {
+	private static class VisibleState implements Login.State {
 		Tag tag = Tag.IDLE;
 		Login.ValidationErrors validationResult;
 		Throwable cause;
 		String token;
+
+		@Override
+		public void dispatch(Login.View k) {
+			switch (tag) {
+				case IDLE:
+					k.idle();
+					break;
+				case ACTIVE:
+					k.active(validationResult);
+					break;
+				case BUSY:
+					k.busy();
+					break;
+				case FAILED:
+					k.failed(cause);
+					break;
+				case LOGGED_IN:
+					k.loggedIn(token);
+					break;
+			}
+		}
 	}
 
 	private final MutableLiveData<Login.State> state = new MutableLiveData<>();
-	private final MutableLiveData<LocalState> update = new MutableLiveData<>();
+	private final MutableLiveData<VisibleState> update = new MutableLiveData<>();
 	private final Login.Service service;
-	private LocalState current = new LocalState();
+	private VisibleState current = new VisibleState();
 	private String username = "";
 	private String password = "";
 
 	@Inject
 	public LoginModel(Login.Service service) {
 		this.service = service;
-		state.setValue(emit(current));
+		state.setValue(current);
 		update.observeForever(next -> {
 			current = next;
-			state.setValue(emit(next));
+			state.setValue(next);
 		});
 	}
 
@@ -55,7 +76,7 @@ public class LoginModel extends ViewModel {
 	public void activate() {
 		current.validationResult = service.validate(username, password);
 		current.tag = Tag.ACTIVE;
-		state.setValue(emit(current));
+		state.setValue(current);
 	}
 
 	public void login() {
@@ -66,9 +87,9 @@ public class LoginModel extends ViewModel {
 			case ACTIVE:
 				if (current.validationResult.isValid()) {
 					current.tag = Tag.BUSY;
-					state.setValue(emit(current));
+					state.setValue(current);
 					service.login(username, password, new Login.Service.Completion() {
-						final LocalState next = new LocalState();
+						final VisibleState next = new VisibleState();
 
 						@Override
 						public void ok(String token) {
@@ -79,16 +100,12 @@ public class LoginModel extends ViewModel {
 
 						@Override
 						public void denied() {
-							next.cause = new Login.Error("Bad username/password combination");
-							next.tag = Tag.FAILED;
-							update.postValue(next);
+							failed(new Login.Error("Bad username/password combination"));
 						}
 
 						@Override
 						public void unavailable() {
-							next.cause = new Login.Error("Service unavailable");
-							next.tag = Tag.FAILED;
-							update.postValue(next);
+							failed(new Login.Error("Service unavailable"));
 						}
 
 						@Override
@@ -108,23 +125,6 @@ public class LoginModel extends ViewModel {
 	private void validateIfActive() {
 		if (current.tag == Tag.ACTIVE) {
 			activate();
-		}
-	}
-
-	private static Login.State emit(LocalState current) {
-		switch (current.tag) {
-			case IDLE:
-				return Login.View::idle;
-			case ACTIVE:
-				return k -> k.active(current.validationResult);
-			case BUSY:
-				return Login.View::busy;
-			case FAILED:
-				return k -> k.failed(current.cause);
-			case LOGGED_IN:
-				return k -> k.loggedIn(current.token);
-			default:
-				throw new AssertionError("unreachable");
 		}
 	}
 }
