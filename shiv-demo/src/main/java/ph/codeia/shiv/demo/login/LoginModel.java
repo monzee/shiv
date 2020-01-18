@@ -11,17 +11,31 @@ import javax.inject.Inject;
  */
 
 
-@SuppressWarnings({"ConstantConditions", "WeakerAccess"})
 public class LoginModel extends ViewModel {
+	private enum Tag {IDLE, ACTIVE, BUSY, FAILED, LOGGED_IN}
+
+	private static class LocalState {
+		Tag tag = Tag.IDLE;
+		Login.ValidationErrors validationResult;
+		Throwable cause;
+		String token;
+	}
+
 	private final MutableLiveData<Login.State> state = new MutableLiveData<>();
+	private final MutableLiveData<LocalState> update = new MutableLiveData<>();
 	private final Login.Service service;
+	private LocalState current = new LocalState();
 	private String username = "";
 	private String password = "";
 
 	@Inject
 	public LoginModel(Login.Service service) {
 		this.service = service;
-		state.setValue(new Login.State());
+		state.setValue(emit(current));
+		update.observeForever(next -> {
+			current = next;
+			state.setValue(emit(next));
+		});
 	}
 
 	public LiveData<Login.State> state() {
@@ -39,50 +53,49 @@ public class LoginModel extends ViewModel {
 	}
 
 	public void activate() {
-		Login.State loginState = state.getValue();
-		loginState.validationResult = service.validate(username, password);
-		loginState.tag = Login.Tag.ACTIVE;
-		state.setValue(loginState);
+		current.validationResult = service.validate(username, password);
+		current.tag = Tag.ACTIVE;
+		state.setValue(emit(current));
 	}
 
 	public void login() {
-		Login.State loginState = state.getValue();
-		switch (loginState.tag) {
+		switch (current.tag) {
 			case IDLE:
 				activate();
 				// fallthrough
 			case ACTIVE:
-				if (loginState.validationResult.isValid()) {
-					loginState.tag = Login.Tag.BUSY;
-					state.setValue(loginState);
-					Login.State copy = new Login.State(loginState);
+				if (current.validationResult.isValid()) {
+					current.tag = Tag.BUSY;
+					state.setValue(emit(current));
 					service.login(username, password, new Login.Service.Completion() {
+						final LocalState next = new LocalState();
+
 						@Override
 						public void ok(String token) {
-							copy.token = token;
-							copy.tag = Login.Tag.LOGGED_IN;
-							state.postValue(copy);
+							next.token = token;
+							next.tag = Tag.LOGGED_IN;
+							update.postValue(next);
 						}
 
 						@Override
 						public void denied() {
-							copy.cause = new Login.Error("Bad username/password combination");
-							copy.tag = Login.Tag.FAILED;
-							state.postValue(copy);
+							next.cause = new Login.Error("Bad username/password combination");
+							next.tag = Tag.FAILED;
+							update.postValue(next);
 						}
 
 						@Override
 						public void unavailable() {
-							copy.cause = new Login.Error("Service unavailable");
-							copy.tag = Login.Tag.FAILED;
-							state.postValue(copy);
+							next.cause = new Login.Error("Service unavailable");
+							next.tag = Tag.FAILED;
+							update.postValue(next);
 						}
 
 						@Override
 						public void failed(Throwable cause) {
-							copy.cause = cause;
-							copy.tag = Login.Tag.FAILED;
-							state.postValue(copy);
+							next.cause = cause;
+							next.tag = Tag.FAILED;
+							update.postValue(next);
 						}
 					});
 				}
@@ -93,8 +106,25 @@ public class LoginModel extends ViewModel {
 	}
 
 	private void validateIfActive() {
-		if (state.getValue().tag == Login.Tag.ACTIVE) {
+		if (current.tag == Tag.ACTIVE) {
 			activate();
+		}
+	}
+
+	private static Login.State emit(LocalState current) {
+		switch (current.tag) {
+			case IDLE:
+				return Login.View::idle;
+			case ACTIVE:
+				return k -> k.active(current.validationResult);
+			case BUSY:
+				return Login.View::busy;
+			case FAILED:
+				return k -> k.failed(current.cause);
+			case LOGGED_IN:
+				return k -> k.loggedIn(current.token);
+			default:
+				throw new AssertionError("unreachable");
 		}
 	}
 }

@@ -26,7 +26,6 @@ import ph.codeia.shiv.demo.R;
  */
 
 
-@SuppressWarnings("WeakerAccess")
 public class LoginFragment extends Fragment {
 	@VisibleForTesting
 	final LoginModel model;
@@ -49,30 +48,37 @@ public class LoginFragment extends Fragment {
 		usernameField.addTextChangedListener(afterChange(model::setUsername));
 		passwordField.addTextChangedListener(afterChange(model::setPassword));
 		submitButton.setOnClickListener(o -> model.login());
-		model.state().observe(getViewLifecycleOwner(), it -> {
-			switch (it.tag) {
-				case IDLE:
-					break;
-				case ACTIVE:
-					username.setError(it.validationResult.username);
-					password.setError(it.validationResult.password);
-					submitButton.setEnabled(it.validationResult.isValid());
-					break;
-				case BUSY:
-					submitButton.setEnabled(false);
-					break;
-				case FAILED:
-					if (it.cause instanceof Login.Error) {
-						go.handle(it.cause, model::activate);
-					}
-					else {
-						go.handle(it.cause);
-					}
-					break;
-				case LOGGED_IN:
-					model.activate();
-					go.toHomeScreen(it.token);
-					break;
+		model.state().observe(getViewLifecycleOwner(), new Login.View() {
+			@Override
+			public void idle() {
+			}
+
+			@Override
+			public void active(Login.ValidationErrors validationResult) {
+				username.setError(validationResult.username);
+				password.setError(validationResult.password);
+				submitButton.setEnabled(validationResult.isValid());
+			}
+
+			@Override
+			public void busy() {
+				submitButton.setEnabled(false);
+			}
+
+			@Override
+			public void failed(Throwable cause) {
+				if (cause instanceof Login.Error) {
+					go.handle(cause, model::activate);
+				}
+				else {
+					go.handle(cause);
+				}
+			}
+
+			@Override
+			public void loggedIn(String token) {
+				model.activate();
+				go.toHomeScreen(token);
 			}
 		});
 	}

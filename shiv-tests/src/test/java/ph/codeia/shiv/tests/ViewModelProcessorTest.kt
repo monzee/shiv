@@ -7,12 +7,13 @@ import androidx.lifecycle.ViewModelStoreOwner
 import dagger.Binds
 import dagger.Component
 import dagger.Module
+import org.junit.Assert.assertSame
 import org.junit.Test
-import org.junit.Assert.*
 import ph.codeia.shiv.InjectingViewModelFactory
 import ph.codeia.shiv.Shared
 import ph.codeia.shiv.Shiv
 import shiv.SharedViewModelProviders
+import shiv.ViewModelBindings
 import javax.inject.Inject
 import javax.inject.Provider
 import javax.inject.Singleton
@@ -46,7 +47,7 @@ interface SharedComponent {
 }
 
 @Singleton
-@Component(modules = [Shiv::class, shiv.ViewModelBindings::class, Bindings::class])
+@Component(modules = [Shiv::class, ViewModelBindings::class, Bindings::class])
 interface FactoryComponent {
 	val providers: Map<Class<*>, @JvmSuppressWildcards Provider<ViewModel>>
 }

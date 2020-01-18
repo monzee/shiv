@@ -1,6 +1,7 @@
 package ph.codeia.shiv.demo.login;
 
 import androidx.annotation.Nullable;
+import androidx.lifecycle.Observer;
 
 /*
  * This file is a part of the Shiv project.
@@ -8,22 +9,22 @@ import androidx.annotation.Nullable;
 
 
 public interface Login {
-	enum Tag {IDLE, ACTIVE, BUSY, FAILED, LOGGED_IN}
+	interface State {
+		void dispatch(Login.View k);
+	}
 
-	class State {
-		public Tag tag = Tag.IDLE;
-		public ValidationErrors validationResult;
-		public Throwable cause;
-		public String token;
+	interface View extends Observer<Login.State> {
+		void idle();
+		void active(ValidationErrors validationResult);
+		void busy();
+		void failed(Throwable cause);
+		void loggedIn(String token);
 
-		public State() {
-		}
-
-		public State(State source) {
-			tag = source.tag;
-			validationResult = source.validationResult;
-			cause = source.cause;
-			token = source.token;
+		@Override
+		default void onChanged(State state) {
+			if (state != null) {
+				state.dispatch(this);
+			}
 		}
 	}
 
