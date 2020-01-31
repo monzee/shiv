@@ -10,15 +10,15 @@ import androidx.lifecycle.Observer;
 
 public interface Login {
 	interface State {
-		void dispatch(Login.View k);
+		void dispatch(Case k);
 	}
 
-	interface View extends Observer<Login.State> {
+	interface Case extends Observer<State> {
 		void idle();
 		void active(ValidationErrors validationResult);
 		void busy();
 		void failed(Throwable cause);
-		void loggedIn(String token);
+		void done(String token);
 
 		@Override
 		default void onChanged(State state) {
@@ -26,6 +26,13 @@ public interface Login {
 				state.dispatch(this);
 			}
 		}
+	}
+
+	interface Actions {
+		void setUsername(CharSequence value);
+		void setPassword(CharSequence value);
+		void login();
+		void reset();
 	}
 
 	class ValidationErrors {

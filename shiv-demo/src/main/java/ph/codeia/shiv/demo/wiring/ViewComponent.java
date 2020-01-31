@@ -8,6 +8,8 @@ import dagger.Subcomponent;
 import ph.codeia.shiv.Shiv;
 import ph.codeia.shiv.demo.AppFlow;
 import ph.codeia.shiv.demo.MainFragment;
+import ph.codeia.shiv.demo.login.LoginComponent;
+import ph.codeia.shiv.demo.login.LoginModule;
 import shiv.FragmentBindings;
 
 /*
@@ -23,6 +25,7 @@ import shiv.FragmentBindings;
 })
 public interface ViewComponent {
 	FragmentFactory fragmentFactory();
+	LoginComponent loginComponent(LoginModule module);
 
 	@Module
 	abstract class Providers {
