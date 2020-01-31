@@ -19,9 +19,9 @@ import ph.codeia.shiv.demo.R;
  */
 
 
-@SuppressWarnings("WeakerAccess")
 public class FizzBuzzFragment extends Fragment {
 	private final ViewModelProvider.Factory factory;
+	private FizzBuzzModel model;
 
 	@Inject
 	public FizzBuzzFragment(ViewModelProvider.Factory factory) {
@@ -31,13 +31,20 @@ public class FizzBuzzFragment extends Fragment {
 
 	@Override
 	public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-		FizzBuzzModel model = new ViewModelProvider(this, factory)
-			.get(FizzBuzzModel.class);
+		model = new ViewModelProvider(this, factory).get(FizzBuzzModel.class);
+		if (savedInstanceState != null) {
+			model.restore(savedInstanceState.getInt("counter"));
+		}
 		TextView counterLabel = view.findViewById(R.id.counter_label);
 		Button plusButton = view.findViewById(R.id.plus_button);
 		Button minusButton = view.findViewById(R.id.minus_button);
 		plusButton.setOnClickListener(o -> model.inc());
 		minusButton.setOnClickListener(o -> model.dec());
 		model.state().observe(getViewLifecycleOwner(), counterLabel::setText);
+	}
+
+	@Override
+	public void onSaveInstanceState(@NonNull Bundle outState) {
+		outState.putInt("counter", model.save());
 	}
 }

@@ -11,7 +11,6 @@ import javax.inject.Inject;
  */
 
 
-@SuppressWarnings("WeakerAccess")
 public class FizzBuzzModel extends ViewModel {
 	private final MutableLiveData<String> state = new MutableLiveData<>();
 	private int count = 1;
@@ -32,6 +31,15 @@ public class FizzBuzzModel extends ViewModel {
 
 	public void dec() {
 		count -= 1;
+		update();
+	}
+
+	public int save() {
+		return count;
+	}
+
+	public void restore(int count) {
+		this.count = count;
 		update();
 	}
 

@@ -11,6 +11,7 @@ import javax.inject.Inject;
  */
 
 
+@SuppressWarnings("ConstantConditions")
 public class LoginModel extends ViewModel {
 	private enum Tag {IDLE, ACTIVE, BUSY, FAILED, LOGGED_IN}
 
@@ -42,24 +43,18 @@ public class LoginModel extends ViewModel {
 		}
 	}
 
-	private final MutableLiveData<Login.State> state = new MutableLiveData<>();
-	private final MutableLiveData<VisibleState> update = new MutableLiveData<>();
+	private final MutableLiveData<VisibleState> state = new MutableLiveData<>();
 	private final Login.Service service;
-	private VisibleState current = new VisibleState();
 	private String username = "";
 	private String password = "";
 
 	@Inject
 	public LoginModel(Login.Service service) {
 		this.service = service;
-		state.setValue(current);
-		update.observeForever(next -> {
-			current = next;
-			state.setValue(next);
-		});
+		state.setValue(new VisibleState());
 	}
 
-	public LiveData<Login.State> state() {
+	public LiveData<? extends Login.State> state() {
 		return state;
 	}
 
@@ -74,12 +69,14 @@ public class LoginModel extends ViewModel {
 	}
 
 	public void activate() {
+		VisibleState current = state.getValue();
 		current.validationResult = service.validate(username, password);
 		current.tag = Tag.ACTIVE;
 		state.setValue(current);
 	}
 
 	public void login() {
+		VisibleState current = state.getValue();
 		switch (current.tag) {
 			case IDLE:
 				activate();
@@ -95,7 +92,7 @@ public class LoginModel extends ViewModel {
 						public void ok(String token) {
 							next.token = token;
 							next.tag = Tag.LOGGED_IN;
-							update.postValue(next);
+							state.postValue(next);
 						}
 
 						@Override
@@ -112,7 +109,7 @@ public class LoginModel extends ViewModel {
 						public void failed(Throwable cause) {
 							next.cause = cause;
 							next.tag = Tag.FAILED;
-							update.postValue(next);
+							state.postValue(next);
 						}
 					});
 				}
@@ -123,7 +120,7 @@ public class LoginModel extends ViewModel {
 	}
 
 	private void validateIfActive() {
-		if (current.tag == Tag.ACTIVE) {
+		if (state.getValue().tag == Tag.ACTIVE) {
 			activate();
 		}
 	}

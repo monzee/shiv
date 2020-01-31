@@ -2,22 +2,10 @@ package ph.codeia.shiv.demo.wiring;
 
 import android.content.Context;
 
-import androidx.core.util.PatternsCompat;
-
-import java.util.Random;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
-import java.util.regex.Pattern;
-
 import javax.inject.Singleton;
 
-import dagger.Binds;
 import dagger.BindsInstance;
 import dagger.Component;
-import dagger.Module;
-import dagger.Provides;
-import ph.codeia.shiv.demo.login.FakeLoginService;
-import ph.codeia.shiv.demo.login.Login;
 
 /*
  * This file is a part of the Shiv project.
@@ -25,9 +13,14 @@ import ph.codeia.shiv.demo.login.Login;
 
 
 @Singleton
-@Component(modules = {AppComponent.Providers.class})
+@Component(modules = {AppServices.class})
 public abstract class AppComponent {
 	public abstract ModelComponent.Factory modelComponentFactory();
+
+	@Component.Factory
+	public interface Factory {
+		AppComponent create(@BindsInstance Context context);
+	}
 
 	private static AppComponent instance;
 
@@ -37,32 +30,5 @@ public abstract class AppComponent {
 				.create(context.getApplicationContext());
 		}
 		return instance;
-	}
-
-	@Component.Factory
-	public interface Factory {
-		AppComponent create(@BindsInstance Context context);
-	}
-
-	@Module
-	public static abstract class Providers {
-		@Provides
-		@Singleton
-		public static Executor io() {
-			return Executors.newCachedThreadPool();
-		}
-
-		@Provides
-		public static Pattern emailPattern() {
-			return PatternsCompat.EMAIL_ADDRESS;
-		}
-
-		@Provides
-		public static Random rng() {
-			return new Random();
-		}
-
-		@Binds
-		public abstract Login.Service loginService(FakeLoginService service);
 	}
 }
