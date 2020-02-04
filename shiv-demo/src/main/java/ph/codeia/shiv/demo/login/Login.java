@@ -1,6 +1,7 @@
 package ph.codeia.shiv.demo.login;
 
 import androidx.annotation.Nullable;
+import androidx.core.util.Supplier;
 import androidx.lifecycle.Observer;
 
 /*
@@ -17,8 +18,8 @@ public interface Login {
 		void idle();
 		void active(ValidationErrors validationResult);
 		void busy();
-		void failed(Throwable cause);
-		void loggedIn(String token);
+		void failed(Throwable cause, Runnable retry);
+		void loggedIn(Supplier<String> token);
 
 		@Override
 		default void onChanged(State state) {

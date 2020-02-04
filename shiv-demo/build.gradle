@@ -23,10 +23,14 @@ android {
     }
 }
 
+repositories {
+    mavenLocal()
+}
+
 dependencies {
-    annotationProcessor project(":shiv-compiler")
+    annotationProcessor "ph.codeia.shiv:shiv-compiler:0.2.0"
     annotationProcessor "com.google.dagger:dagger-compiler:$dagger_version"
-    implementation project(":shiv-runtime")
+    implementation "ph.codeia.shiv:shiv-runtime:0.2.0"
     implementation "androidx.appcompat:appcompat:1.1.0"
     implementation "androidx.fragment:fragment:1.2.0"
     implementation "androidx.navigation:navigation-fragment:2.2.0"
