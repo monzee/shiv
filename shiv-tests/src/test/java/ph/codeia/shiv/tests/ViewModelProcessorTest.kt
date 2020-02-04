@@ -65,8 +65,8 @@ class ViewModelProcessorTest {
 	@Test
 	fun `injects the same qualified instance even when unscoped`() {
 		DaggerSharedComponent.create().inject(this)
-		assert(owner.store.contains(Model1::class.java))
-		assert(owner.store.contains(Model2::class.java))
+		assert(Model1::class.java in owner.store)
+		assert(Model2::class.java in owner.store)
 		assertSame(model1, model2.model1)
 	}
 

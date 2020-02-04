@@ -1,1 +1,2 @@
-ph.codeia.shiv.processor.ShivProcessor,aggregating
+ph.codeia.shiv.processor.InjectProcessor,aggregating
+ph.codeia.shiv.processor.LateBoundProcessor,isolating
