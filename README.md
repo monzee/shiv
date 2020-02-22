@@ -1,5 +1,5 @@
 # Shiv
-Constructor injection for fragments and view models using dagger2 with
+Constructor injection for fragments and view models using Dagger2 with
 minimal boilerplate.
 
 
@@ -17,10 +17,10 @@ dependencies {
 
 
 ## Requirements and assumptions
-- dagger2 in your build dependencies
+- Dagger in your build dependencies
 - no existing binding to `FragmentFactory` and `ViewModelProvider.Factory` in
   the graph
-- constructor injection only (may change in the future)
+- constructor injection only
 - using `androidx.*` packages
 - all view models are owned by the activity and thus shared by every fragment
 
@@ -28,8 +28,9 @@ dependencies {
 ## Usage
 The following code examples are simplified in order to highlight the important parts
 of the process. Please see the demo module to see how the components typically look
-like in actual projects. All generated code are in java7, so kotlin or d8 is not
-required.
+like in actual projects. All generated code are Java 6/7-compatible, so Kotlin or
+`(target|source)Compatibility "1.8"` is not required. I would still recommend at
+least using Java 8 though.
 
 1. Define the classes to be injected. This step is done first in order to trigger
    the module code generation. You can fill in the dependencies later. Hit `Ctrl-F9`
@@ -69,7 +70,7 @@ required.
 
 3. Install the bundled `Shiv` and the generated `shiv.FragmentBindings` modules
    into the subcomponent. Expose the type `FragmentFactory` from the subcomponent.
-   Rebuild the project with `Ctrl-F9` to generate the dagger implementations.
+   Rebuild the project with `Ctrl-F9` to generate the Dagger implementations.
 
     ```kotlin
     @Subcomponent(modules = [Shiv::class, shiv.FragmentBindings::class])
@@ -79,7 +80,7 @@ required.
     ```
 
 4. Override the activity's `#onCreate` method to use the fragment factory built
-   by dagger. Make sure to do this before calling `super.onCreate(...)`.
+   by Dagger. Make sure to do this before calling `super.onCreate(...)`.
 
     ```kotlin
     class MainActivity : AppCompatActivity(R.layout.activity_main) {
@@ -143,7 +144,7 @@ required.
 `AndroidViewModel`s are view models that have a constructor dependency on an
 `Application`. The view model can then build other objects that need an application
 context (e.g. anything that needs file IO). If you really need an application, you
-can bind it to the dagger graph via `@BindsInstance` in a (sub)component factory/builder
+can bind it to the Dagger graph via `@BindsInstance` in a (sub)component factory/builder
 and it will be provided to your view model constructor. You probably don't need
 an `Application` though but a service that depends on `Context`. For clarity, it's
 best to depend directly on that service instead.
@@ -152,27 +153,31 @@ best to depend directly on that service instead.
 
 `SavedStateHandle` allows view models constructed by `SavedStateViewModelFactory`
 to read and write to a `Bundle` that persists not only across configuration changes
-but also process death and recreation. Theoretically, you could bind a `SavedStateHandle`
-instance to the dagger graph, but creating and managing a `SavedStateHandle` is
-not very simple. Unfortunately, the `SavedStateHandleController` class is package
-private to `androidx.lifecycle` and I'm not about to copy-paste all that logic or
-hijack their namespace. Perhaps it will become public in the future, but for now
-you could bind the nullable `Bundle` that you receive in the activity `#onCreate`
-hook and inject it to your view models.
+but also process death and recreation. When a `SavedStateHandle` is requested in
+an injectable constructor, the codegen creates an extra provider method in
+`shiv.SharedViewModelProviders` that returns a `SavedStateHandle` that is properly
+tied to the recreation cycle of the fragment or activity. This relies on the fact
+that `FragmentActivity` and `Fragment` implement `HasDefaultViewModelProviderFactory`
+that returns a `SavedStateViewModelFactory` that is used to attach a view model
+instance that serves only to hold a `SavedStateHandler`. It will not work on any
+other `ViewModelStoreOwner` (are there other kinds of VM store owners?).
+
+TL;DR: it just works. You can simply add a `SavedStateHandle` dependency in your
+view model constructor.
 
 ### ...fragment-owned `ViewModel`s?
 
 Sometimes you want a view model that is scoped to a particular fragment and not to
 the activity. You might want the data to survive configuration changes, but you
 also want the data to go away when the fragment is detached so that when the fragment
-is re-attached, you get back to a clean state. In this case, you shouldn't inject
+is re-attached, you get back a clean slate. In this case, you shouldn't inject
 a `@Shared` view model to a fragment, but instead depend on a `ViewModelProvider.Factory`
 and build your own view models using `ViewModelProvider` or the jetpack viewmodel
 extension.
 
 When the interface `ViewModelProvider.Factory` is requested anywhere in the graph,
 the `shiv` processor generates a module called `shiv.ViewModelBindings` that should
-be added to your dagger graph. The bundled `Shiv` module itself binds an
+be added to your Dagger graph. The bundled `Shiv` module itself binds an
 implementation of the `ViewModelProvider.Factory` that relies on this generated
 module to populate a map multibinding of view model providers.
 
@@ -192,7 +197,7 @@ class SomeFragment @Inject constructor(
 }
 ```
 
-Note that `SomeViewModel` above must be reachable by dagger, so an `@Inject`ed
+Note that `SomeViewModel` above must be reachable by Dagger, so an `@Inject`ed
 constructor is required even if it's empty.
 
 ### ...if I already have a binding to `FragmentFactory` or `ViewModelProvider.Factory`?
@@ -200,6 +205,80 @@ constructor is required even if it's empty.
 Don't install the `Shiv` module. Instead, use the concrete types `InjectingFragmentFactory`
 and `InjectingViewModelFactory` anywhere you use `FragmentFactory` and
 `ViewModelProvider.Factory` respectively.
+
+
+## Bonus round
+
+### `@LateBound` constructor arguments
+
+Not really related to fragments or view models, but this library also provides a
+generator for injectable factories for classes with constructor arguments that
+vary widely and is likely only known at the call site. This accomplishes the
+same goals as [assisted injection](https://github.com/google/guice/wiki/AssistedInject)
+but is very simplistic and less flexible.
+
+Suppose you have a class like this and you want Dagger to build it for you:
+
+```java
+class LoginView {
+  private final FragmentLoginBindings bindings;
+  private final LoginPresenter presenter;
+
+  LoginView(View root, LoginPresenter presenter) {
+    bindings = FragmentLoginBindings.bind(root);
+    this.presenter = presenter;
+  }
+}
+```
+
+The `View` object that the constructor needs is obtained very late and it's not
+very practical to create a subgraph at the call site just for this class. What
+you'd usually do is write a factory with the late-bound objects in the operative
+method and the rest constructor-injected. This could then be easily built by
+Dagger:
+
+```java
+class LoginView {
+  //...
+  static class Factory {
+    private final LoginPresenter presenter;
+
+    @Inject
+    Factory(LoginPresenter presenter) {
+      this.presenter = presenter;
+    }
+
+    LoginView create(View root) {
+      return new LoginView(root, presenter);
+    }
+  }
+}
+```
+
+Then you could have your `LoginFragment` request a `LoginView.Factory` in the
+constructor and call `loginViewFactory.create(view)` in the `#onViewCreated(View, Bundle?)`
+method.
+
+This pattern is useful but is painful to do by hand, especially in Java. It can
+be automated by annotating the late-bound constructor parameters with `@LateBound`.
+
+```java
+class LoginView {
+  // ...
+  LoginView(@LateBound View root, LoginPresenter presenter) {
+    // ...
+  }
+}
+```
+
+This triggers the generation of a class named `PartialLoginView` in the same package
+that is implemented a lot like the `LoginView.Factory` example above. Your fragment
+could then request a `PartialLoginView` then call its `#bind(View)` method in the
+fragment hook.
+
+You could have any number of `@LateBound` parameters in any position. The operative
+method name is hard-coded as `bind` and its parameters are all the
+`@LateBound`-annotated parameters in the order they appear in the constructor.
 
 
 ## License
