@@ -1,9 +1,11 @@
 package ph.codeia.shiv.tests
 
 import android.content.Context
-import androidx.fragment.app.*
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.commitNow
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelStoreOwner
 import dagger.BindsInstance
 import dagger.Component
 import ph.codeia.shiv.InjectingFragmentFactory
@@ -17,11 +19,11 @@ import javax.inject.Inject
  * This file is a part of the Shiv project.
  */
 
-class Launcher : Fragment() {
+class LauncherFragment : Fragment() {
 	override fun onAttach(context: Context) {
 		super.onAttach(context)
 		DaggerTestComponent.factory()
-			.create(requireActivity())
+			.create(this)
 			.factory
 			.let {
 				childFragmentManager.fragmentFactory = it
@@ -61,7 +63,7 @@ interface TestComponent {
 
 	@Component.Factory
 	interface Factory {
-		fun create(@BindsInstance activity: FragmentActivity): TestComponent
+		fun create(@BindsInstance owner: ViewModelStoreOwner): TestComponent
 	}
 }
 

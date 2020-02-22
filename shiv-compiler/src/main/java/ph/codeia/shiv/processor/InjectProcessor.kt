@@ -30,6 +30,21 @@ class InjectProcessor : AbstractProcessor() {
 
 	private enum class Encounter { ViewModelFactory, SavedStateHandle }
 
+	private class UniqueNames {
+		val taken = mutableSetOf<String>()
+
+		operator fun get(base: String): String = run {
+			var key = base
+			var n = 1
+			while (key in taken) {
+				key = "${base}_$n"
+				n += 1
+			}
+			taken += key
+			key
+		}
+	}
+
 	@Suppress("UnstableApiUsage")
 	override fun process(
 		annotations: Set<TypeElement>,
@@ -39,20 +54,21 @@ class InjectProcessor : AbstractProcessor() {
 		val fragmentElements = mutableListOf<TypeElement>()
 		val vmElements = mutableListOf<TypeElement>()
 		val seen = EnumSet.noneOf(Encounter::class.java)
+		val names = UniqueNames()
 		roundEnv.getElementsAnnotatedWith(inject)
 			.asSequence()
 			.onEach {
 				when {
 					Encounter.ViewModelFactory in seen -> {}
 					it.kind != ElementKind.FIELD -> {}
-					MoreElements.asVariable(it).asType().isViewModelFactory() -> {
+					MoreElements.asVariable(it).asType() extends VIEW_MODEL_FACTORY -> {
 						seen += Encounter.ViewModelFactory
 					}
 				}
 				when {
 					Encounter.SavedStateHandle in seen -> {}
 					it.kind != ElementKind.FIELD -> {}
-					MoreElements.asVariable(it).asType().isSavedStateHandle() -> {
+					MoreElements.asVariable(it).asType() extends SAVED_STATE_HANDLE -> {
 						seen += Encounter.SavedStateHandle
 					}
 				}
@@ -69,13 +85,13 @@ class InjectProcessor : AbstractProcessor() {
 				when {
 					Encounter.ViewModelFactory in seen -> {}
 					MoreTypes.asExecutable(it.asType()).parameterTypes.any { param ->
-						param.isViewModelFactory()
+						param extends VIEW_MODEL_FACTORY
 					} -> seen += Encounter.ViewModelFactory
 				}
 				when {
 					Encounter.SavedStateHandle in seen -> {}
 					MoreTypes.asExecutable(it.asType()).parameterTypes.any { param ->
-						param.isSavedStateHandle()
+						param extends SAVED_STATE_HANDLE
 					} -> seen += Encounter.SavedStateHandle
 				}
 			}
@@ -88,12 +104,12 @@ class InjectProcessor : AbstractProcessor() {
 				.addModifiers(Modifier.PUBLIC)
 				.addMethods(fragmentElements.map {
 					val fragmentName = ClassName.get(it)
-					MethodSpec.methodBuilder("bind${it.simpleName}")
+					MethodSpec.methodBuilder(names["bind${it.simpleName}"])
 						.addAnnotation(Names.BINDS)
 						.addAnnotation(Names.INTO_MAP)
 						.addAnnotation(
 							AnnotationSpec.builder(Names.STRING_KEY)
-								.addMember("value", S, it.qualifiedName)
+								.addMember("value", "$1S", it.qualifiedName)
 								.build()
 						)
 						.addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
@@ -123,36 +139,28 @@ class InjectProcessor : AbstractProcessor() {
 								String::class.java, "currentKey",
 								Modifier.PRIVATE, Modifier.STATIC
 							)
-							.initializer(S, Names.SAVED_STATE_HANDLE_HOLDER.toString())
+							.initializer("$1S", Names.SAVED_STATE_HANDLE_HOLDER.toString())
 							.build())
-						addMethods(listOf(
-							MethodSpec.methodBuilder("provideSavedStateHandle")
-								.addAnnotation(Names.PROVIDES)
-								.addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-								.addParameter(Names.ACTIVITY, "activity")
-								.returns(typeNameOf(SAVED_STATE_HANDLE))
-								.addStatement(
-									"$1T provider = new $1T(activity)",
-									Names.VIEW_MODEL_PROVIDER
-								)
-								.addStatement(
-									"$1T holder = provider.get(currentKey, $1T.class)",
-									Names.SAVED_STATE_HANDLE_HOLDER
-								)
-								.addStatement("return holder.handle")
-								.build(),
-							MethodSpec.methodBuilder("bindViewModelStoreOwner")
-								.addAnnotation(Names.BINDS)
-								.addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
-								.addParameter(Names.ACTIVITY, "activity")
-								.returns(Names.VIEW_MODEL_STORE_OWNER)
-								.build()
-						))
+						addMethod(MethodSpec.methodBuilder(names["provideSavedStateHandle"])
+							.addAnnotation(Names.PROVIDES)
+							.addModifiers(Modifier.PUBLIC, Modifier.STATIC)
+							.addParameter(Names.VIEW_MODEL_STORE_OWNER, "owner")
+							.returns(typeNameOf(SAVED_STATE_HANDLE))
+							.addStatement(
+								"$1T provider = new $1T(owner)",
+								Names.VIEW_MODEL_PROVIDER
+							)
+							.addStatement(
+								"$1T holder = provider.get(currentKey, $1T.class)",
+								Names.SAVED_STATE_HANDLE_HOLDER
+							)
+							.addStatement("return holder.handle")
+							.build())
 					}
 				}
 				.addMethods(vmElements.map {
 					val vmName = ClassName.get(it)
-					MethodSpec.methodBuilder("provide${it.simpleName}")
+					MethodSpec.methodBuilder(names["provide${it.simpleName}"])
 						.addAnnotation(Names.PROVIDES)
 						.addAnnotation(Names.SHARED)
 						.addModifiers(Modifier.PUBLIC, Modifier.STATIC)
@@ -165,14 +173,14 @@ class InjectProcessor : AbstractProcessor() {
 						.apply {
 							if (shouldProvideSavedStateHandle) {
 								addStatement(
-									"currentKey = \"$1L#$2L\"",
+									"currentKey = \"$1L:$2L\"",
 									vmName.toString(),
 									Names.SAVED_STATE_HANDLE_HOLDER.simpleName()
 								)
 							}
 						}
 						.addStatement(
-							"return $T.createViewModel(owner, provider, $T.class)",
+							"return $1T.createViewModel(owner, provider, $2T.class)",
 							Names.SHIV,
 							vmName
 						)
@@ -191,12 +199,12 @@ class InjectProcessor : AbstractProcessor() {
 					.addModifiers(Modifier.PUBLIC)
 					.addMethods(vmElements.map {
 						val vmName = ClassName.get(it)
-						MethodSpec.methodBuilder("bind${it.simpleName}")
+						MethodSpec.methodBuilder(names["bind${it.simpleName}"])
 							.addAnnotation(Names.BINDS)
 							.addAnnotation(Names.INTO_MAP)
 							.addAnnotation(
 								AnnotationSpec.builder(Names.CLASS_KEY)
-									.addMember("value", "$T.class", vmName)
+									.addMember("value", "$1T.class", vmName)
 									.build()
 							)
 							.addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)

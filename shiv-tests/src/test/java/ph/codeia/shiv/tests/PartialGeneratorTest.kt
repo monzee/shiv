@@ -37,7 +37,10 @@ class PartialGeneratorTest {
 	@Test
 	fun `it works with alternating late-bound and injectable params`() {
 		val xs = doubleArrayOf(1.0, 2.0, 3.0)
-		val lorem = PartialLorem({ "lorem ipsum" }, { xs }).bind(1024, true)
+		val lorem = PartialLorem(
+			{ "lorem ipsum" },
+			{ xs })
+			.bind(1024, true)
 		assertEquals("lorem ipsum", lorem.s)
 		assertEquals(1024, lorem.n)
 		assert(lorem.b)
@@ -46,18 +49,9 @@ class PartialGeneratorTest {
 
 	@Test
 	fun `has the same visibility as target constructor`() {
-		val ipsum: Ipsum = PartialIpsum().bind("ipsum")
+		val ipsum: Ipsum = PartialIpsum()
+			.bind("ipsum")
 		assertEquals("ipsum", ipsum.s)
 		assert(Modifier.isProtected(PartialIpsum::class.java.declaredConstructors[0].modifiers))
 	}
 }
-
-class Foo(val str: String, @LateBound val num: Int) {
-	class Bar(@LateBound val bool: Boolean)
-}
-
-class Baz(val str: String, @LateBound val num: Int, @LateBound val bool: Boolean)
-
-class Lorem(@LateBound val n: Int, val s: String, @LateBound val b: Boolean, val xs: DoubleArray)
-
-class Ipsum protected constructor(@LateBound val s: String)

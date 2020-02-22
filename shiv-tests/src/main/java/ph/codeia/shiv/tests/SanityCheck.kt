@@ -14,7 +14,7 @@ class SaneFragment : Fragment() {
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
-		vm = ViewModelProvider(requireActivity()).get()
+		vm = ViewModelProvider(this).get()
 	}
 }
 

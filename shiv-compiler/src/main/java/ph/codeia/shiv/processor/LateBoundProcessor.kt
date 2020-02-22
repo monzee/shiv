@@ -105,7 +105,7 @@ class LateBoundProcessor : AbstractProcessor() {
 				val consBody = CodeBlock.builder()
 					.also { builder ->
 						consParams.forEach {
-							builder.addStatement("this.$N = $N", it.name, it.name)
+							builder.addStatement("this.$1N = $1N", it.name)
 						}
 					}
 					.build()
@@ -113,7 +113,7 @@ class LateBoundProcessor : AbstractProcessor() {
 				val consArgs = partial.constructorArgs.joinToString(", ")
 				val targetName = ClassName.get(partial.classDef)
 				val bindBody = CodeBlock.builder()
-					.addStatement("return new $T($consArgs)", targetName)
+					.addStatement("return new $1T($consArgs)", targetName)
 					.build()
 				val packageName = getPackageOf(partial.classDef).qualifiedName
 				val classModifiers = (partial.classDef.modifiers - Modifier.STATIC + Modifier.FINAL)

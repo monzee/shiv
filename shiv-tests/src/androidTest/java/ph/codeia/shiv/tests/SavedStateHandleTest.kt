@@ -29,7 +29,7 @@ class SavedStateHandleTest {
 
 	@Test
 	fun can_recover_values_after_recreation() {
-		val scenario = launchFragment<Launcher>()
+		val scenario = launchFragment<LauncherFragment>()
 		scenario.onFragment {
 			val vm = it.testFragment().vm
 			vm.isUntouched = false
@@ -49,7 +49,7 @@ class SavedStateHandleTest {
 
 	@Test
 	fun does_not_overwrite_on_key_collision_with_a_different_handle() {
-		val scenario = launchFragment<Launcher>()
+		val scenario = launchFragment<LauncherFragment>()
 		scenario.onFragment {
 			val test = it.testFragment()
 			test.vm.handle["foo"] = "hello"

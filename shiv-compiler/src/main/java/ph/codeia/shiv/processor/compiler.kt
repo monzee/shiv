@@ -19,12 +19,8 @@ const val INJECT = "javax.inject.Inject"
 const val FRAGMENT = "androidx.fragment.app.Fragment"
 const val VIEW_MODEL = "androidx.lifecycle.ViewModel"
 const val VIEW_MODEL_FACTORY = "androidx.lifecycle.ViewModelProvider.Factory"
-const val INJECTING_VIEW_MODEL_FACTORY = "ph.codeia.shiv.InjectingViewModelFactory"
 const val LATE_BOUND = "ph.codeia.shiv.LateBound"
 const val SAVED_STATE_HANDLE = "androidx.lifecycle.SavedStateHandle"
-const val T = "${'$'}T"
-const val S = "${'$'}S"
-const val N = "${'$'}N"
 
 
 object Names {
@@ -41,7 +37,6 @@ object Names {
 	val SAVED_STATE_HANDLE_HOLDER = ClassName.get("ph.codeia.shiv", "SavedStateHandleHolder")
 	val VIEW_MODEL_PROVIDER = ClassName.get("androidx.lifecycle", "ViewModelProvider")
 	val VIEW_MODEL_STORE_OWNER = ClassName.get("androidx.lifecycle", "ViewModelStoreOwner")
-	val ACTIVITY = ClassName.get("androidx.fragment.app", "FragmentActivity")
 }
 
 
@@ -73,12 +68,4 @@ class ProcessingContext(processingEnv: ProcessingEnvironment) :
 	}
 
 	fun typeNameOf(fqcn: String): TypeName = TypeName.get(getTypeElement(fqcn).asType())
-
-	fun TypeMirror.isViewModelFactory(): Boolean = let {
-		it extends VIEW_MODEL_FACTORY || it extends INJECTING_VIEW_MODEL_FACTORY
-	}
-
-	fun TypeMirror.isSavedStateHandle(): Boolean = let {
-		it extends SAVED_STATE_HANDLE
-	}
 }
