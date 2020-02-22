@@ -19,9 +19,9 @@ const val INJECT = "javax.inject.Inject"
 const val FRAGMENT = "androidx.fragment.app.Fragment"
 const val VIEW_MODEL = "androidx.lifecycle.ViewModel"
 const val VIEW_MODEL_FACTORY = "androidx.lifecycle.ViewModelProvider.Factory"
-const val VIEW_MODEL_STORE_OWNER = "androidx.lifecycle.ViewModelStoreOwner"
 const val INJECTING_VIEW_MODEL_FACTORY = "ph.codeia.shiv.InjectingViewModelFactory"
 const val LATE_BOUND = "ph.codeia.shiv.LateBound"
+const val SAVED_STATE_HANDLE = "androidx.lifecycle.SavedStateHandle"
 const val T = "${'$'}T"
 const val S = "${'$'}S"
 const val N = "${'$'}N"
@@ -38,6 +38,10 @@ object Names {
 	val PROVIDER = ClassName.get("javax.inject", "Provider")
 	val SHARED = ClassName.get("ph.codeia.shiv", "Shared")
 	val SHIV = ClassName.get("ph.codeia.shiv", "Shiv")
+	val SAVED_STATE_HANDLE_HOLDER = ClassName.get("ph.codeia.shiv", "SavedStateHandleHolder")
+	val VIEW_MODEL_PROVIDER = ClassName.get("androidx.lifecycle", "ViewModelProvider")
+	val VIEW_MODEL_STORE_OWNER = ClassName.get("androidx.lifecycle", "ViewModelStoreOwner")
+	val ACTIVITY = ClassName.get("androidx.fragment.app", "FragmentActivity")
 }
 
 
@@ -49,7 +53,9 @@ class ProcessingContext(processingEnv: ProcessingEnvironment) :
 	val filer = processingEnv.filer
 
 	infix fun Element.extends(superType: String): Boolean = let {
-		it extends getTypeElement(superType)
+		getTypeElement(superType)?.let { typeElem ->
+			it extends typeElem
+		} ?: false
 	}
 
 	infix fun Element.extends(superType: Element): Boolean = let {
@@ -57,7 +63,9 @@ class ProcessingContext(processingEnv: ProcessingEnvironment) :
 	}
 
 	infix fun TypeMirror.extends(superType: String): Boolean = let {
-		it extends getTypeElement(superType).asType()
+		getTypeElement(superType)?.let { typeElem ->
+			it extends typeElem.asType()
+		} ?: false
 	}
 
 	infix fun TypeMirror.extends(superType: TypeMirror): Boolean = let {
@@ -68,5 +76,9 @@ class ProcessingContext(processingEnv: ProcessingEnvironment) :
 
 	fun TypeMirror.isViewModelFactory(): Boolean = let {
 		it extends VIEW_MODEL_FACTORY || it extends INJECTING_VIEW_MODEL_FACTORY
+	}
+
+	fun TypeMirror.isSavedStateHandle(): Boolean = let {
+		it extends SAVED_STATE_HANDLE
 	}
 }

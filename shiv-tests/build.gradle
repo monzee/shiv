@@ -19,6 +19,13 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+    compileOptions {
+        targetCompatibility "1.8"
+        sourceCompatibility "1.8"
+    }
 }
 
 kapt {
@@ -28,9 +35,15 @@ kapt {
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'androidx.appcompat:appcompat:1.1.0'
-    testImplementation project(":shiv-runtime")
+    implementation "androidx.lifecycle:lifecycle-viewmodel-savedstate:2.2.0"
+    debugImplementation "androidx.fragment:fragment-testing:1.2.2"
+    implementation project(":shiv-runtime")
+    implementation "com.google.dagger:dagger:$dagger_version"
+    kapt project(":shiv-compiler")
+    kapt "com.google.dagger:dagger-compiler:$dagger_version"
+
     testImplementation 'junit:junit:4.12'
-    testImplementation "com.google.dagger:dagger-compiler:$dagger_version"
+    testImplementation "com.google.dagger:dagger:$dagger_version"
     kaptTest project(":shiv-compiler")
     kaptTest "com.google.dagger:dagger-compiler:$dagger_version"
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
