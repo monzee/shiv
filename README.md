@@ -158,11 +158,11 @@ an injectable constructor, the codegen creates an extra provider method in
 `shiv.SharedViewModelProviders` that returns a `SavedStateHandle` that is properly
 tied to the recreation cycle of the fragment or activity. This relies on the fact
 that `FragmentActivity` and `Fragment` implement `HasDefaultViewModelProviderFactory`
-that returns a `SavedStateViewModelFactory` that is used to attach a view model
-instance that serves only to hold a `SavedStateHandler`. It will not work on any
-other `ViewModelStoreOwner` (are there other kinds of VM store owners?).
+that returns a `SavedStateViewModelFactory` that is used to create and attach a
+view model instance that serves only to hold a `SavedStateHandler`. It will not
+work on any other `ViewModelStoreOwner` (are there other kinds of VM store owners?).
 
-TL;DR: it just works. You can simply add a `SavedStateHandle` dependency in your
+TL;DR: it just works. You can freely add a `SavedStateHandle` dependency in your
 view model constructor.
 
 ### ...fragment-owned `ViewModel`s?
@@ -172,7 +172,7 @@ the activity. You might want the data to survive configuration changes, but you
 also want the data to go away when the fragment is detached so that when the fragment
 is re-attached, you get back a clean slate. In this case, you shouldn't inject
 a `@Shared` view model to a fragment, but instead depend on a `ViewModelProvider.Factory`
-and build your own view models using `ViewModelProvider` or the jetpack viewmodel
+and build your own view models using `ViewModelProvider` or the Jetpack `viewModels`
 extension.
 
 When the interface `ViewModelProvider.Factory` is requested anywhere in the graph,
@@ -222,7 +222,7 @@ Not really related to fragments or view models, but this library also provides a
 generator for injectable factories for classes with constructor arguments that
 vary widely and is likely only known at the call site. This accomplishes the
 same goals as [assisted injection](https://github.com/google/guice/wiki/AssistedInject)
-but is very simplistic and less flexible.
+but in a very simplistic and less flexible manner.
 
 Suppose you have a class like this and you want Dagger to build it for you:
 
@@ -266,8 +266,26 @@ Then you could have your `LoginFragment` request a `LoginView.Factory` in the
 constructor and call `loginViewFactory.create(view)` in the `#onViewCreated(View, Bundle?)`
 method.
 
-This pattern is useful but is painful to do by hand, especially in Java. It can
-be automated by annotating the late-bound constructor parameters with `@LateBound`.
+```java
+class LoginFragment {
+  private final LoginView.Factory viewFactory;
+
+  @Inject
+  LoginFragment(LoginView.Factory viewFactory){
+    super(R.layout.fragment_login);
+    this.viewFactory = viewFactory;
+  }
+
+  @Override
+  public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    LoginView loginView = viewFactory.create(view);
+    // ...
+  }
+}
+```
+
+This pattern is useful but painful to do by hand, especially in Java. It can be
+automated by annotating the late-bound constructor parameters with `@LateBound`.
 
 ```java
 class LoginView {
@@ -281,11 +299,69 @@ class LoginView {
 This triggers the generation of a class named `PartialLoginView` in the same package
 that is implemented a lot like the `LoginView.Factory` example above. Your fragment
 could then request a `PartialLoginView` then call its `#bind(View)` method in the
-fragment hook.
+fragment hook. It's the same code as before, just with different names:
+
+```java
+class LoginFragment {
+  private final PartialLoginView partialView;
+
+  @Inject
+  LoginFragment(PartialLoginView partialView) {
+    this.partialView = partialView;
+  }
+
+  @Override
+  public void onViewCreate(View view, @Nullable Bundle savedInstanceState) {
+    LoginView loginView = partialView.bind(view);
+    // ...
+  }
+}
+```
 
 You could have any number of `@LateBound` parameters in any position. The operative
 method name is hard-coded as `bind` and its parameters are all the
 `@LateBound`-annotated parameters in the order they appear in the constructor.
+
+### Even more simplified example
+
+The example outlined in the section above is simplified but is not as simple as it
+can get. If you are sure you wouldn't break the "no `Context` dependency" rule in
+view models and don't care about scopes at all, you could put everything in a
+single Dagger component:
+
+```kotlin
+@Component(modules = [shiv.SharedViewModelProviders::class, shiv.FragmentBindings::class])
+interface AppComponent {
+  val fragmentFactory: InjectingFragmentFactory
+
+  @Component.Factory
+  interface Factory {
+    fun create(@BindsInstance owner: ViewModelStoreOwner): AppComponent
+  }
+}
+
+class MainActivity : AppCompatActivity(R.layout.activity_main) {
+  override fun onCreate(savedInstanceState: Bundle?) {
+    DaggerAppComponent.factory()
+      .create(this)
+      .fragmentFactory
+      .let { supportFragmentManager.fragmentFactory = it }
+    super.onCreate(savedInstanceState)
+  }
+}
+
+class FooFragment @Inject constructor(
+  @Shared private val model: FooViewModel
+) : Fragment(R.layout.fragment_foo) {
+  // ...
+}
+
+class FooViewModel @Inject constructor(
+  private val savedState: SavedStateHandle
+) : ViewModel() {
+  // ...
+}
+```
 
 
 ## License
