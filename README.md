@@ -200,6 +200,13 @@ class SomeFragment @Inject constructor(
 Note that `SomeViewModel` above must be reachable by Dagger, so an `@Inject`ed
 constructor is required even if it's empty.
 
+Using `shiv.ViewModelBindings` with `SavedStateHandle` has undefined behavior at
+the moment. First, if you've not added the `shiv.SharedViewModelProviders` module
+as well, there would be no binding to `SavedStateHandle`. More than that, the
+holder view model would reuse the previously assigned key, so some existing
+`SavedStateHandle` would be overwritten. This may or may not be an issue for you,
+but I'm planning to fix this by also setting the key inside `InjectingViewModelFactory`.
+
 ### ...if I already have a binding to `FragmentFactory` or `ViewModelProvider.Factory`?
 
 Don't install the `Shiv` module. Instead, use the concrete types `InjectingFragmentFactory`
