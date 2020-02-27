@@ -4,7 +4,6 @@ import com.google.auto.common.MoreElements
 import com.google.auto.common.MoreTypes
 import com.google.auto.service.AutoService
 import com.squareup.javapoet.*
-import java.util.*
 import javax.annotation.processing.AbstractProcessor
 import javax.annotation.processing.Processor
 import javax.annotation.processing.RoundEnvironment
@@ -27,8 +26,6 @@ class InjectProcessor : AbstractProcessor() {
 	override fun getSupportedAnnotationTypes(): Set<String> = run {
 		setOf(INJECT)
 	}
-
-	private enum class Encounter { ViewModelFactory, SavedStateHandle }
 
 	private class UniqueNames {
 		val taken = mutableSetOf<String>()
@@ -53,50 +50,35 @@ class InjectProcessor : AbstractProcessor() {
 		val inject = getTypeElement(INJECT)
 		val fragmentElements = mutableListOf<TypeElement>()
 		val vmElements = mutableListOf<TypeElement>()
-		val seen = EnumSet.noneOf(Encounter::class.java)
+		val needsSavedState = mutableSetOf<TypeElement>()
 		val names = UniqueNames()
+		var shouldMultiBindVM = false
 		roundEnv.getElementsAnnotatedWith(inject)
 			.asSequence()
-			.onEach {
-				when {
-					Encounter.ViewModelFactory in seen -> {}
-					it.kind != ElementKind.FIELD -> {}
-					MoreElements.asVariable(it).asType() extends VIEW_MODEL_FACTORY -> {
-						seen += Encounter.ViewModelFactory
-					}
-				}
-				when {
-					Encounter.SavedStateHandle in seen -> {}
-					it.kind != ElementKind.FIELD -> {}
-					MoreElements.asVariable(it).asType() extends SAVED_STATE_HANDLE -> {
-						seen += Encounter.SavedStateHandle
-					}
-				}
-			}
 			.filter { it.kind == ElementKind.CONSTRUCTOR }
 			.forEach {
 				val classElement = MoreElements.asType(it.enclosingElement)
 				when {
 					classElement extends FRAGMENT ->
 						fragmentElements += classElement
-					classElement extends VIEW_MODEL ->
+					classElement extends VIEW_MODEL -> {
 						vmElements += classElement
+						MoreTypes.asExecutable(it.asType())
+							.parameterTypes
+							.any { param -> param extends SAVED_STATE_HANDLE }
+							.let { found ->
+								if (found) needsSavedState += classElement
+							}
+					}
 				}
 				when {
-					Encounter.ViewModelFactory in seen -> {}
+					shouldMultiBindVM -> {}
 					MoreTypes.asExecutable(it.asType()).parameterTypes.any { param ->
 						param extends VIEW_MODEL_FACTORY
-					} -> seen += Encounter.ViewModelFactory
-				}
-				when {
-					Encounter.SavedStateHandle in seen -> {}
-					MoreTypes.asExecutable(it.asType()).parameterTypes.any { param ->
-						param extends SAVED_STATE_HANDLE
-					} -> seen += Encounter.SavedStateHandle
+					} -> shouldMultiBindVM = true
 				}
 			}
-		val shouldMultiBindVM = Encounter.ViewModelFactory in seen
-		val shouldProvideSavedStateHandle = Encounter.SavedStateHandle in seen
+		val shouldProvideSavedStateHandle = needsSavedState.isNotEmpty()
 
 		if (fragmentElements.isNotEmpty()) {
 			TypeSpec.interfaceBuilder("FragmentBindings")
@@ -117,6 +99,9 @@ class InjectProcessor : AbstractProcessor() {
 						.returns(typeNameOf(FRAGMENT))
 						.build()
 				})
+				.apply {
+					fragmentElements.forEach { addOriginatingElement(it) }
+				}
 				.build()
 				.let { JavaFile.builder("shiv", it) }
 				.addFileComment(SIGNATURE)
@@ -127,37 +112,15 @@ class InjectProcessor : AbstractProcessor() {
 
 		if (vmElements.isNotEmpty()) {
 			TypeSpec.classBuilder("SharedViewModelProviders")
-				.addAnnotation(Names.MODULE)
-				.addModifiers(
-					Modifier.PUBLIC,
-					Modifier.ABSTRACT
-				)
-				.apply {
-					if (shouldProvideSavedStateHandle) {
-						addField(FieldSpec
-							.builder(
-								String::class.java, "currentKey",
-								Modifier.PRIVATE, Modifier.STATIC
-							)
-							.initializer("$1S", Names.SAVED_STATE_HANDLE_HOLDER.toString())
-							.build())
-						addMethod(MethodSpec.methodBuilder(names["provideSavedStateHandle"])
-							.addAnnotation(Names.PROVIDES)
-							.addModifiers(Modifier.PUBLIC, Modifier.STATIC)
-							.addParameter(Names.VIEW_MODEL_STORE_OWNER, "owner")
-							.returns(typeNameOf(SAVED_STATE_HANDLE))
-							.addStatement(
-								"$1T provider = new $1T(owner)",
-								Names.VIEW_MODEL_PROVIDER
-							)
-							.addStatement(
-								"$1T holder = provider.get(currentKey, $1T.class)",
-								Names.SAVED_STATE_HANDLE_HOLDER
-							)
-							.addStatement("return holder.handle")
-							.build())
-					}
-				}
+				.addAnnotation(AnnotationSpec.builder(Names.MODULE).run {
+					if (shouldProvideSavedStateHandle) addMember(
+						"includes",
+						"$1T.class",
+						Names.SAVED_STATE_MODULE
+					)
+					build()
+				})
+				.addModifiers(Modifier.PUBLIC, Modifier.ABSTRACT)
 				.addMethods(vmElements.map {
 					val vmName = ClassName.get(it)
 					MethodSpec.methodBuilder(names["provide${it.simpleName}"])
@@ -169,16 +132,17 @@ class InjectProcessor : AbstractProcessor() {
 							ParameterizedTypeName.get(Names.PROVIDER, vmName),
 							"provider"
 						)
-						.returns(vmName)
 						.apply {
-							if (shouldProvideSavedStateHandle) {
+							if (it in needsSavedState) {
+								addParameter(Names.SAVED_STATE_HOLDER_KEY, "key")
 								addStatement(
-									"currentKey = \"$1L:$2L\"",
+									"key.set(\"$1L:$2L\")",
 									vmName.toString(),
-									Names.SAVED_STATE_HANDLE_HOLDER.simpleName()
+									Names.SAVED_STATE_HOLDER.simpleName()
 								)
 							}
 						}
+						.returns(vmName)
 						.addStatement(
 							"return $1T.createViewModel(owner, provider, $2T.class)",
 							Names.SHIV,
@@ -186,6 +150,9 @@ class InjectProcessor : AbstractProcessor() {
 						)
 						.build()
 				})
+				.apply {
+					vmElements.forEach { addOriginatingElement(it) }
+				}
 				.build()
 				.let { JavaFile.builder("shiv", it) }
 				.addFileComment(SIGNATURE)
@@ -195,7 +162,14 @@ class InjectProcessor : AbstractProcessor() {
 
 			if (shouldMultiBindVM) {
 				TypeSpec.interfaceBuilder("ViewModelBindings")
-					.addAnnotation(Names.MODULE)
+					.addAnnotation(AnnotationSpec.builder(Names.MODULE).run {
+						if (shouldProvideSavedStateHandle) addMember(
+							"includes",
+							"$1T.class",
+							Names.SAVED_STATE_MODULE
+						)
+						build()
+					})
 					.addModifiers(Modifier.PUBLIC)
 					.addMethods(vmElements.map {
 						val vmName = ClassName.get(it)
@@ -212,6 +186,9 @@ class InjectProcessor : AbstractProcessor() {
 							.returns(typeNameOf(VIEW_MODEL))
 							.build()
 					})
+					.apply {
+						vmElements.forEach { addOriginatingElement(it) }
+					}
 					.build()
 					.let { JavaFile.builder("shiv", it) }
 					.addFileComment(SIGNATURE)

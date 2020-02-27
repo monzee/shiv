@@ -40,7 +40,7 @@ public class FakeLoginService implements Login.Service {
 		io.execute(() -> {
 			try {
 				Thread.sleep(2000);
-				switch (rng.nextInt(4)) {
+				switch (rng.nextInt(10)) {
 					case 0:
 						block.denied();
 						break;
@@ -48,7 +48,7 @@ public class FakeLoginService implements Login.Service {
 						block.unavailable();
 						break;
 					case 2:
-						if (rng.nextInt(25) == 0) {
+						if (rng.nextInt(10) == 0) {
 							throw new IllegalStateException("random error");
 						}
 						// conditional fallthrough

@@ -14,12 +14,15 @@ android {
     buildTypes {
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
         }
     }
     compileOptions {
-        sourceCompatibility = '1.8'
-        targetCompatibility = '1.8'
+        sourceCompatibility = "1.8"
+        targetCompatibility = "1.8"
+    }
+    viewBinding {
+        enabled = true
     }
 }
 
@@ -28,9 +31,9 @@ repositories {
 }
 
 dependencies {
-    annotationProcessor "ph.codeia.shiv:shiv-compiler:0.3.1"
+    annotationProcessor "ph.codeia.shiv:shiv-compiler:0.4.0"
     annotationProcessor "com.google.dagger:dagger-compiler:$dagger_version"
-    implementation "ph.codeia.shiv:shiv-runtime:0.3.1"
+    implementation "ph.codeia.shiv:shiv-runtime:0.4.0"
     implementation "androidx.appcompat:appcompat:1.1.0"
     implementation "androidx.fragment:fragment:1.2.2"
     implementation "androidx.navigation:navigation-fragment:2.2.1"

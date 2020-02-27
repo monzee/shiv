@@ -19,10 +19,10 @@ import dagger.Module;
 @Module
 public abstract class Shiv {
 	@Binds
-	public abstract FragmentFactory bind(InjectingFragmentFactory factory);
+	public abstract FragmentFactory bindFragmentFactory(InjectingFragmentFactory factory);
 
 	@Binds
-	public abstract ViewModelProvider.Factory bind(InjectingViewModelFactory factory);
+	public abstract ViewModelProvider.Factory bindVMFactory(InjectingViewModelFactory factory);
 
 	@NonNull
 	public static <VM extends ViewModel> VM createViewModel(

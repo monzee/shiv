@@ -1,18 +1,13 @@
 package ph.codeia.shiv.demo.login;
 
 import android.view.View;
-import android.widget.Button;
-import android.widget.EditText;
 
 import androidx.core.util.Supplier;
-import androidx.lifecycle.LifecycleOwner;
-
-import com.google.android.material.textfield.TextInputLayout;
 
 import ph.codeia.shiv.LateBound;
 import ph.codeia.shiv.demo.AppFlow;
-import ph.codeia.shiv.demo.R;
 import ph.codeia.shiv.demo.ViewExt;
+import ph.codeia.shiv.demo.databinding.FragmentLoginBinding;
 
 /*
  * This file is a part of the Shiv project.
@@ -21,25 +16,17 @@ import ph.codeia.shiv.demo.ViewExt;
 
 public class LoginView implements Login.View, ViewExt {
 	private final AppFlow go;
-	private final TextInputLayout username;
-	private final TextInputLayout password;
-	private final EditText usernameField;
-	private final EditText passwordField;
-	private final Button submitButton;
+	private final FragmentLoginBinding views;
 
 	public LoginView(AppFlow go, @LateBound View view) {
 		this.go = go;
-		username = view.findViewById(R.id.username);
-		usernameField = view.findViewById(R.id.username_field);
-		password = view.findViewById(R.id.password);
-		passwordField = view.findViewById(R.id.password_field);
-		submitButton = view.findViewById(R.id.submit_button);
+		views = FragmentLoginBinding.bind(view);
 	}
 
 	public void start(LoginModel model) {
-		afterTextChanged(usernameField, model::setUsername);
-		afterTextChanged(passwordField, model::setPassword);
-		onClick(submitButton, model::login);
+		afterTextChanged(views.usernameField, model::setUsername);
+		afterTextChanged(views.passwordField, model::setPassword);
+		onClick(views.submitButton, model::login);
 	}
 
 	@Override
@@ -48,14 +35,14 @@ public class LoginView implements Login.View, ViewExt {
 
 	@Override
 	public void active(Login.ValidationErrors validationResult) {
-		username.setError(validationResult.username);
-		password.setError(validationResult.password);
-		submitButton.setEnabled(validationResult.isValid());
+		views.username.setError(validationResult.username);
+		views.password.setError(validationResult.password);
+		views.submitButton.setEnabled(validationResult.isValid());
 	}
 
 	@Override
 	public void busy() {
-		submitButton.setEnabled(false);
+		views.submitButton.setEnabled(false);
 	}
 
 	@Override

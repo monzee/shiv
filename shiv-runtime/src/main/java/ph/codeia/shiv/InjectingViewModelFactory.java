@@ -28,6 +28,7 @@ public class InjectingViewModelFactory implements ViewModelProvider.Factory {
 	public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
 		Provider<ViewModel> provider = providers.get(modelClass);
 		if (provider != null) {
+			SavedStateHolder.key = modelClass.getCanonicalName() + ":SavedStateHolder";
 			return (T) provider.get();
 		}
 		else {

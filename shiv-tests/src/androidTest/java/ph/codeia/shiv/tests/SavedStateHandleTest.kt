@@ -28,6 +28,14 @@ class SavedStateHandleTest {
 	}
 
 	@Test
+	fun you_can_save_during_onSaveInstanceState_though() {
+		val scenario = launchFragment<SaneFragment>()
+		scenario.recreate().onFragment {
+			assertTrue(it.vm.handle["saved"]!!)
+		}
+	}
+
+	@Test
 	fun can_recover_values_after_recreation() {
 		val scenario = launchFragment<LauncherFragment>()
 		scenario.onFragment {
@@ -59,6 +67,23 @@ class SavedStateHandleTest {
 			val test = it.testFragment()
 			assertEquals("hello", test.vm.handle["foo"])
 			assertEquals("hi", test.otherVm.handle["foo"])
+		}
+	}
+
+	@Test
+	fun can_recover_values_saved_during_onSaveInstanceState() {
+		val scenario = launchFragment<LauncherFragment>()
+		scenario.onFragment {
+			val test = it.testFragment()
+			test.vm.isUntouched = false
+			test.onSaveInstanceState {
+				test.vm.handle["saved"] = true
+			}
+		}
+		scenario.recreate().onFragment {
+			val test = it.testFragment()
+			assert(test.vm.isUntouched)
+			assert(test.vm.handle["saved"]!!)
 		}
 	}
 }

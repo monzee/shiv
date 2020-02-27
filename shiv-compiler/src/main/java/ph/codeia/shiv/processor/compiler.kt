@@ -24,19 +24,21 @@ const val SAVED_STATE_HANDLE = "androidx.lifecycle.SavedStateHandle"
 
 
 object Names {
-	val MODULE = ClassName.get("dagger", "Module")
-	val BINDS = ClassName.get("dagger", "Binds")
-	val PROVIDES = ClassName.get("dagger", "Provides")
-	val INTO_MAP = ClassName.get("dagger.multibindings", "IntoMap")
-	val CLASS_KEY = ClassName.get("dagger.multibindings", "ClassKey")
-	val STRING_KEY = ClassName.get("dagger.multibindings", "StringKey")
-	val INJECT = ClassName.get("javax.inject", "Inject")
-	val PROVIDER = ClassName.get("javax.inject", "Provider")
-	val SHARED = ClassName.get("ph.codeia.shiv", "Shared")
-	val SHIV = ClassName.get("ph.codeia.shiv", "Shiv")
-	val SAVED_STATE_HANDLE_HOLDER = ClassName.get("ph.codeia.shiv", "SavedStateHandleHolder")
-	val VIEW_MODEL_PROVIDER = ClassName.get("androidx.lifecycle", "ViewModelProvider")
-	val VIEW_MODEL_STORE_OWNER = ClassName.get("androidx.lifecycle", "ViewModelStoreOwner")
+	val MODULE = ClassName.get("dagger", "Module")!!
+	val BINDS = ClassName.get("dagger", "Binds")!!
+	val PROVIDES = ClassName.get("dagger", "Provides")!!
+	val INTO_MAP = ClassName.get("dagger.multibindings", "IntoMap")!!
+	val CLASS_KEY = ClassName.get("dagger.multibindings", "ClassKey")!!
+	val STRING_KEY = ClassName.get("dagger.multibindings", "StringKey")!!
+	val INJECT = ClassName.get("javax.inject", "Inject")!!
+	val PROVIDER = ClassName.get("javax.inject", "Provider")!!
+	val SHARED = ClassName.get("ph.codeia.shiv", "Shared")!!
+	val SHIV = ClassName.get("ph.codeia.shiv", "Shiv")!!
+	val SAVED_STATE_HOLDER = ClassName.get("ph.codeia.shiv", "SavedStateHolder")!!
+	val SAVED_STATE_HOLDER_KEY = ClassName
+		.get("ph.codeia.shiv", "SavedStateHolder", "KeySetter")!!
+	val SAVED_STATE_MODULE = ClassName.get("ph.codeia.shiv", "SavedStateModule")!!
+	val VIEW_MODEL_STORE_OWNER = ClassName.get("androidx.lifecycle", "ViewModelStoreOwner")!!
 }
 
 
@@ -45,7 +47,7 @@ class ProcessingContext(processingEnv: ProcessingEnvironment) :
 	Types by processingEnv.typeUtils,
 	Messager by processingEnv.messager
 {
-	val filer = processingEnv.filer
+	val filer = processingEnv.filer!!
 
 	infix fun Element.extends(superType: String): Boolean = let {
 		getTypeElement(superType)?.let { typeElem ->

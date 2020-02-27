@@ -16,6 +16,10 @@ class SaneFragment : Fragment() {
 		super.onCreate(savedInstanceState)
 		vm = ViewModelProvider(this).get()
 	}
+
+	override fun onSaveInstanceState(outState: Bundle) {
+		vm.handle["saved"] = true
+	}
 }
 
 

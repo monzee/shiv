@@ -134,6 +134,7 @@ class LateBoundProcessor : AbstractProcessor() {
 						.addCode(bindBody)
 						.returns(targetName)
 						.build())
+					.addOriginatingElement(partial.constructor)
 					.build()
 			}
 			.map { (packageName, classSpec) ->

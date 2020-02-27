@@ -1,6 +1,7 @@
 package ph.codeia.shiv.tests
 
 import android.content.Context
+import android.os.Bundle
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commitNow
 import androidx.lifecycle.SavedStateHandle
@@ -30,24 +31,34 @@ class LauncherFragment : Fragment() {
 			}
 	}
 
-	fun testFragment(): TestFragment = run {
-		var fragment = childFragmentManager.findFragmentByTag("testFragment") as? TestFragment
+	fun testFragment(): SSFragment = run {
+		var fragment = childFragmentManager.findFragmentByTag("testFragment") as? SSFragment
 		if (fragment == null) {
 			childFragmentManager.commitNow {
-				add(TestFragment::class.java, null, "testFragment")
+				add(SSFragment::class.java, null, "testFragment")
 			}
-			fragment = childFragmentManager.findFragmentByTag("testFragment") as TestFragment
+			fragment = childFragmentManager.findFragmentByTag("testFragment") as SSFragment
 		}
 		fragment
 	}
 }
 
-class TestFragment @Inject constructor(
-	@Shared val vm: TestViewModel,
+class SSFragment @Inject constructor(
+	@Shared val vm: SSViewModel,
 	@Shared val otherVm: ColliderViewModel
-) : Fragment()
+) : Fragment() {
+	private var save: (() -> Unit)? = null
 
-class TestViewModel @Inject constructor(val handle: SavedStateHandle) : ViewModel() {
+	fun onSaveInstanceState(block: () -> Unit) {
+		save = block
+	}
+
+	override fun onSaveInstanceState(outState: Bundle) {
+		save?.invoke()
+	}
+}
+
+class SSViewModel @Inject constructor(val handle: SavedStateHandle) : ViewModel() {
 	var isUntouched = true
 }
 
