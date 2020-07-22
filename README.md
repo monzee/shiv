@@ -68,12 +68,12 @@ least using Java 8 though.
    module and just use the class name. To do the same in kotlin, you must add
    `kapt { correctErrorTypes = true }` in your gradle script.
 
-3. Install the bundled `Shiv` and the generated `shiv.FragmentBindings` modules
+3. Install the bundled `ShivModule` and the generated `shiv.FragmentBindings` modules
    into the subcomponent. Expose the type `FragmentFactory` from the subcomponent.
    Rebuild the project with `Ctrl-F9` to generate the Dagger implementations.
 
     ```kotlin
-    @Subcomponent(modules = [Shiv::class, shiv.FragmentBindings::class])
+    @Subcomponent(modules = [ShivModule::class, shiv.FragmentBindings::class])
     interface ViewComponent {
         val fragmentFactory: FragmentFactory
     }
@@ -177,12 +177,12 @@ extension.
 
 When the interface `ViewModelProvider.Factory` is requested anywhere in the graph,
 the `shiv` processor generates a module called `shiv.ViewModelBindings` that should
-be added to your Dagger graph. The bundled `Shiv` module itself binds an
+be added to your Dagger graph. The bundled `ShivModule` module itself binds an
 implementation of the `ViewModelProvider.Factory` that relies on this generated
 module to populate a map multibinding of view model providers.
 
 ```kotlin
-@Subcomponent(modules = [Shiv::class, shiv.FragmentBindings::class, shiv.ViewModelBindings::class])
+@Subcomponent(modules = [ShivModule::class, shiv.FragmentBindings::class, shiv.ViewModelBindings::class])
 interface ViewComponent {
     // ...
 }
@@ -200,16 +200,9 @@ class SomeFragment @Inject constructor(
 Note that `SomeViewModel` above must be reachable by Dagger, so an `@Inject`ed
 constructor is required even if it's empty.
 
-Using `shiv.ViewModelBindings` with `SavedStateHandle` has undefined behavior at
-the moment. First, if you've not added the `shiv.SharedViewModelProviders` module
-as well, there would be no binding to `SavedStateHandle`. More than that, the
-holder view model would reuse the previously assigned key, so some existing
-`SavedStateHandle` would be overwritten. This may or may not be an issue for you,
-but I'm planning to fix this by also setting the key inside `InjectingViewModelFactory`.
-
 ### ...if I already have a binding to `FragmentFactory` or `ViewModelProvider.Factory`?
 
-Don't install the `Shiv` module. Instead, use the concrete types `InjectingFragmentFactory`
+Don't install the `ShivModule` module. Instead, use the concrete types `InjectingFragmentFactory`
 and `InjectingViewModelFactory` anywhere you use `FragmentFactory` and
 `ViewModelProvider.Factory` respectively.
 

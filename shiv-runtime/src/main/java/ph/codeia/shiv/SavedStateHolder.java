@@ -5,12 +5,8 @@ import androidx.lifecycle.ViewModel;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.ViewModelStoreOwner;
 
-import java.util.concurrent.atomic.AtomicReference;
-
 import javax.inject.Inject;
-import javax.inject.Named;
 
-import dagger.Provides;
 import dagger.Reusable;
 
 /*

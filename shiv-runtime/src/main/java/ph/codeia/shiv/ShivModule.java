@@ -17,7 +17,7 @@ import dagger.Module;
 
 
 @Module
-public abstract class Shiv {
+public abstract class ShivModule {
 	@Binds
 	public abstract FragmentFactory bindFragmentFactory(InjectingFragmentFactory factory);
 

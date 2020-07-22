@@ -5,7 +5,7 @@ import androidx.fragment.app.FragmentFactory;
 import dagger.Binds;
 import dagger.Module;
 import dagger.Subcomponent;
-import ph.codeia.shiv.Shiv;
+import ph.codeia.shiv.ShivModule;
 import ph.codeia.shiv.demo.AppFlow;
 import ph.codeia.shiv.demo.MainFragment;
 import shiv.FragmentBindings;
@@ -17,7 +17,7 @@ import shiv.FragmentBindings;
 
 @Per.Configuration
 @Subcomponent(modules = {
-	Shiv.class,
+	ShivModule.class,
 	FragmentBindings.class,
 	ViewComponent.Providers.class
 })

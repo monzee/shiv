@@ -11,7 +11,7 @@ import dagger.BindsInstance
 import dagger.Component
 import ph.codeia.shiv.InjectingFragmentFactory
 import ph.codeia.shiv.Shared
-import ph.codeia.shiv.Shiv
+import ph.codeia.shiv.ShivModule
 import shiv.FragmentBindings
 import shiv.SharedViewModelProviders
 import javax.inject.Inject
@@ -65,7 +65,7 @@ class SSViewModel @Inject constructor(val handle: SavedStateHandle) : ViewModel(
 class ColliderViewModel @Inject constructor(val handle: SavedStateHandle) : ViewModel()
 
 @Component(modules = [
-	Shiv::class,
+	ShivModule::class,
 	FragmentBindings::class,
 	SharedViewModelProviders::class
 ])

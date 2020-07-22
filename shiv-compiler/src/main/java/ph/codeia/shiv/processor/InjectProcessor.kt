@@ -145,7 +145,7 @@ class InjectProcessor : AbstractProcessor() {
 						.returns(vmName)
 						.addStatement(
 							"return $1T.createViewModel(owner, provider, $2T.class)",
-							Names.SHIV,
+							Names.SHIV_MODULE,
 							vmName
 						)
 						.build()

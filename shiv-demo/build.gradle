@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 29
-    buildToolsVersion "29.0.2"
+    buildToolsVersion "29.0.3"
     defaultConfig {
         applicationId "ph.codeia.shiv"
         minSdkVersion 19
@@ -21,8 +21,8 @@ android {
         sourceCompatibility = "1.8"
         targetCompatibility = "1.8"
     }
-    viewBinding {
-        enabled = true
+    buildFeatures {
+        viewBinding = true
     }
 }
 
@@ -31,9 +31,9 @@ repositories {
 }
 
 dependencies {
-    annotationProcessor "ph.codeia.shiv:shiv-compiler:0.4.0"
+    annotationProcessor "ph.codeia.shiv:shiv-compiler:0.4.1"
     annotationProcessor "com.google.dagger:dagger-compiler:$dagger_version"
-    implementation "ph.codeia.shiv:shiv-runtime:0.4.0"
+    implementation "ph.codeia.shiv:shiv-runtime:0.4.1"
     implementation "androidx.appcompat:appcompat:1.1.0"
     implementation "androidx.fragment:fragment:1.2.2"
     implementation "androidx.navigation:navigation-fragment:2.2.1"

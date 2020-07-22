@@ -33,7 +33,7 @@ object Names {
 	val INJECT = ClassName.get("javax.inject", "Inject")!!
 	val PROVIDER = ClassName.get("javax.inject", "Provider")!!
 	val SHARED = ClassName.get("ph.codeia.shiv", "Shared")!!
-	val SHIV = ClassName.get("ph.codeia.shiv", "Shiv")!!
+	val SHIV_MODULE = ClassName.get("ph.codeia.shiv", "ShivModule")!!
 	val SAVED_STATE_HOLDER = ClassName.get("ph.codeia.shiv", "SavedStateHolder")!!
 	val SAVED_STATE_HOLDER_KEY = ClassName
 		.get("ph.codeia.shiv", "SavedStateHolder", "KeySetter")!!
