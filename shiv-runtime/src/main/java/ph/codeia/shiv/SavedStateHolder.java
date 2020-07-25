@@ -24,7 +24,7 @@ public class SavedStateHolder extends ViewModel {
 	}
 
 	public interface KeySetter {
-		void set(String value);
+		String set(String value);
 	}
 
 	@Reusable

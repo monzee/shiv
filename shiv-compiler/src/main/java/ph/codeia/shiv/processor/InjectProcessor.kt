@@ -136,18 +136,27 @@ class InjectProcessor : AbstractProcessor() {
 							if (it in needsSavedState) {
 								addParameter(Names.SAVED_STATE_HOLDER_KEY, "key")
 								addStatement(
-									"key.set(\"$1L:$2L\")",
+									"String old = key.set(\"$1L:$2L\")",
 									vmName.toString(),
 									Names.SAVED_STATE_HOLDER.simpleName()
+								)
+								addStatement(
+									"$2T vm = $1T.createViewModel(owner, provider, $2T.class)",
+									Names.SHIV_MODULE,
+									vmName
+								)
+								addStatement("key.set(old)")
+								addStatement("return vm")
+							}
+							else {
+								addStatement(
+									"return $1T.createViewModel(owner, provider, $2T.class)",
+									Names.SHIV_MODULE,
+									vmName
 								)
 							}
 						}
 						.returns(vmName)
-						.addStatement(
-							"return $1T.createViewModel(owner, provider, $2T.class)",
-							Names.SHIV_MODULE,
-							vmName
-						)
 						.build()
 				})
 				.apply {

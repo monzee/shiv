@@ -16,10 +16,15 @@ import javax.inject.Provider;
 
 public class InjectingViewModelFactory implements ViewModelProvider.Factory {
 	private final Map<Class<?>, Provider<ViewModel>> providers;
+	private final SavedStateHolder.KeySetter key;
 
 	@Inject
-	public InjectingViewModelFactory(Map<Class<?>, Provider<ViewModel>> providers) {
+	public InjectingViewModelFactory(
+		Map<Class<?>, Provider<ViewModel>> providers,
+		SavedStateHolder.KeySetter key
+	) {
 		this.providers = providers;
+		this.key = key;
 	}
 
 	@SuppressWarnings("unchecked")
@@ -28,8 +33,10 @@ public class InjectingViewModelFactory implements ViewModelProvider.Factory {
 	public <T extends ViewModel> T create(@NonNull Class<T> modelClass) {
 		Provider<ViewModel> provider = providers.get(modelClass);
 		if (provider != null) {
-			SavedStateHolder.key = modelClass.getCanonicalName() + ":SavedStateHolder";
-			return (T) provider.get();
+			String old = key.set(modelClass.getCanonicalName() + ":SavedStateHolder");
+			T vm = (T) provider.get();
+			key.set(old);
+			return vm;
 		}
 		else {
 			throw new IllegalArgumentException(""

@@ -18,8 +18,10 @@ public abstract class SavedStateModule {
 	static SavedStateHolder.KeySetter provideKeySetter() {
 		return new SavedStateHolder.KeySetter() {
 			@Override
-			public void set(String value) {
+			public String set(String value) {
+				String old = SavedStateHolder.key;
 				SavedStateHolder.key = value;
+				return old;
 			}
 		};
 	}
